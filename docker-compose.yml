@@ -34,10 +34,14 @@ services:
     build:
       context: ./react
     container_name: react
+    volumes:
+      - ./react:/app
     ports:
       - "3000:3000"
     depends_on:
       - django
+    environment:
+      NODE_ENV: development
 
   rabbitmq:
     image: rabbitmq:management
