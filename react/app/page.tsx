@@ -25,7 +25,7 @@ export default function Home() {
           <SignupForm onSuccess={handleSuccess} />
         </div>
       ) : (
-        <div></div>
+        <div className="m-8">Welcome back.</div>
       )}
     </main>
   );
