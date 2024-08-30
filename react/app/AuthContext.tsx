@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { checkAuth } from './accounts/auth'; // Adjust the import path as necessary
 
@@ -11,22 +11,26 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchAuthStatus = async () => {
       const authStatus = await checkAuth();
       setIsAuthenticated(authStatus);
-        setIsLoading(false);
+      setIsLoading(false);
     };
 
     fetchAuthStatus();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, isLoading, setIsLoading }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, setIsAuthenticated, isLoading, setIsLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );

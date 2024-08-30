@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "../styles/globals.css";
-import { AuthProvider } from "./AuthContext";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '../styles/globals.css';
+import { AuthProvider } from './AuthContext';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "SpatialLab",
-  description: "GIS tools for the web",
+  title: 'SpatialLab',
+  description: 'GIS tools for the web',
 };
 
 export default function RootLayout({

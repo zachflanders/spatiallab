@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SignupForm from '../accounts/SignupForm';
@@ -11,12 +11,11 @@ const Signup = () => {
   const handleSuccess = () => {
     setIsAuthenticated(true);
     router.push('/');
-  }
-  
+  };
 
   return (
-   <div className="m-8">
-        <SignupForm onSuccess={handleSuccess} />
+    <div className="m-8">
+      <SignupForm onSuccess={handleSuccess} />
     </div>
   );
 };

@@ -1,21 +1,20 @@
-"use client";
-import { useState, useEffect } from "react";
-import type { Metadata } from "next";
-import { useRouter } from "next/router";
+'use client';
+import { useState, useEffect } from 'react';
+import type { Metadata } from 'next';
+import { useRouter } from 'next/router';
 
-
-import Header from "./Header";
+import Header from './Header';
 
 export const metadata: Metadata = {
-    title: "SpatialLab",
-    description: "GIS tools for the web",
-  };
+  title: 'SpatialLab',
+  description: 'GIS tools for the web',
+};
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
- 
+
   if (isLoading) {
     return <main>Loading...</main>;
   }
@@ -26,5 +25,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main>{children}</main>
     </div>
   );
-};
-
+}

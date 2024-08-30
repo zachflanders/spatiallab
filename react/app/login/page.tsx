@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoginForm from '../accounts/LoginForm';
@@ -11,12 +11,11 @@ const Login = () => {
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
     router.push('/');
-  }
-  
+  };
 
   return (
-   <div className="m-8">
-        <LoginForm onLoginSuccess={handleLoginSuccess} />
+    <div className="m-8">
+      <LoginForm onLoginSuccess={handleLoginSuccess} />
     </div>
   );
 };

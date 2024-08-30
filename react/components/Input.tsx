@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface InputProps {
   type: string;
@@ -8,7 +8,13 @@ interface InputProps {
   required?: boolean;
 }
 
-const Input: React.FC<InputProps> = ({ type, value, onChange, placeholder, required }) => {
+const Input: React.FC<InputProps> = ({
+  type,
+  value,
+  onChange,
+  placeholder,
+  required,
+}) => {
   return (
     <input
       type={type}
