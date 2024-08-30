@@ -1,7 +1,9 @@
 FROM python:3.11-slim
 
-# Set environment variables to ensure Python outputs UTF-8
+# Set environment variables to ensure Python outputs UTF-8 
+# and that poetry does not create a virtualenv
 ENV LANG C.UTF-8
+ENV POETRY_VIRTUALENVS_CREATE=false
 
 # Set working directory
 WORKDIR /app
