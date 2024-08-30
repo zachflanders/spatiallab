@@ -10,9 +10,7 @@ from .forms import UserCreationForm
 @csrf_exempt
 def signup_view(request):
     if request.method == 'POST':
-        print('hello')
         form = UserCreationForm(request.POST)
-        print(form)
         if form.is_valid():
             user = form.save()
             login(request, user)

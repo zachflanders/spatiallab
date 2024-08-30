@@ -7,16 +7,12 @@ import {useAuth} from "./AuthContext";
 
 export default function Home() {
 
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, setIsAuthenticated, isLoading } = useAuth();
   const router = useRouter()
 
-
-
-
-  const handleLogout = async () => {
-    logout();
-    const isAuth = await checkAuth();
-    setIsAuthenticated(isAuth);
+  const handleSuccess = () => {
+    setIsAuthenticated(true);
+    router.push('/');
   }
    
 
@@ -30,7 +26,7 @@ export default function Home() {
       
       {!isAuthenticated ? (
         <div className="m-8">
-          <SignupForm />
+          <SignupForm onSuccess={handleSuccess}/>
         </div>
       ) : (
         <div>
