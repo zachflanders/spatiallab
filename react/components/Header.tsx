@@ -24,7 +24,10 @@ const Header: React.FC<HeaderProps> = () => {
 
   return (
     <header className="p-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
+      <div
+        className="container mx-auto flex justify-between items-center"
+        style={{ minHeight: 40 }}
+      >
         <Link href="/">
           <span className="text-2xl font-bold">SpatialLab</span>
         </Link>
