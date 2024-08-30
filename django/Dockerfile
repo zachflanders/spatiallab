@@ -13,7 +13,14 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     build-essential \
+    gdal-bin \
+    libgdal-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Set GDAL environment variables
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV GDAL_LIBRARY_PATH=/usr/lib/libgdal.so
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
