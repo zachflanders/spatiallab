@@ -57,3 +57,4 @@ def ingest_file_to_db(gcs_path, layer_name, user_email):
         # Create Property instances for each feature
         for key, value in feature["properties"].items():
             Property.objects.create(key=key, value=value, feature=feature_instance)
+    return layer.id

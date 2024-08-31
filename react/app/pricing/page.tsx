@@ -24,7 +24,7 @@ const PricingPage: React.FC = () => {
                   <li>✔️ Upload up to 3 layers</li>
                   <li>✔️ 500MB storage</li>
                   <li>✔️ Analyze geospatial data</li>
-                  <li>✔️ Create and publish maps</li>
+                  <li>✔️ Create and publish 3 maps</li>
                 </ul>
               </div>
               <div className="mt-6">
@@ -44,7 +44,7 @@ const PricingPage: React.FC = () => {
                   <li>✔️ Upload up to 100 layers</li>
                   <li>✔️ 50GB storage</li>
                   <li>✔️ Analyze geospatial data</li>
-                  <li>✔️ Create and publish maps</li>
+                  <li>✔️ Create and publish 50 maps</li>
                 </ul>
               </div>
               <div className="mt-6">
@@ -64,7 +64,7 @@ const PricingPage: React.FC = () => {
                   <li>✔️ Unlimited layers</li>
                   <li>✔️ 250GB storage</li>
                   <li>✔️ Analyze geospatial data</li>
-                  <li>✔️ Create and publish maps</li>
+                  <li>✔️ Create and publish unlimited maps</li>
                 </ul>
               </div>
               <div className="mt-6">

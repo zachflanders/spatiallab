@@ -72,6 +72,9 @@ services:
       - "8080:8080"
     volumes:
       - geoserver_data:/var/geoserver/data_dir
+    environment:
+      GEOSERVER_ADMIN_USER: admin
+      GEOSERVER_ADMIN_PASSWORD: password
 
   jenkins:
     image: jenkins/jenkins:lts
