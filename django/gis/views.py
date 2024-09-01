@@ -13,7 +13,7 @@ from google.cloud import storage
 from pyproj import Transformer
 from requests.auth import HTTPBasicAuth
 
-from gis.models import Property, Feature, Layer
+from gis.models import Property, Feature
 from gis.tasks import ingest_file_to_db_task
 
 logger = logging.getLogger(__name__)
@@ -135,28 +135,14 @@ def layer_view(request, layer_id):
         maxy = float(extent[3])
         minx, maxx = min(minx, maxx), max(minx, maxx)
         miny, maxy = min(miny, maxy), max(miny, maxy)
-        logger.debug(
-            f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
-        )
-
-        logger.debug(
-            f"After transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
-        )
         if minx < -180 or minx > 180 or maxx < -180 or maxx > 180:
             logger.error("Longitude values are out of range. Adjusting to valid range.")
             minx = max(min(minx, 180), -180)
             maxx = max(min(maxx, 180), -180)
-            logger.debug(
-                f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
-            )
-
         if miny < -90 or miny > 90 or maxy < -90 or maxy > 90:
             logger.error("Latitude values are out of range. Adjusting to valid range.")
             miny = max(min(miny, 90), -90)
             maxy = max(min(maxy, 90), -90)
-            logger.debug(
-                f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
-            )
         transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
         minx, miny = transformer.transform(minx, miny)
         maxx, maxy = transformer.transform(maxx, maxy)

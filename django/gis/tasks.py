@@ -4,7 +4,6 @@ from celery import shared_task
 from google.cloud import storage
 from django.contrib.gis.geos import GEOSGeometry
 from pyproj import CRS, Transformer
-from shapely.geometry import GeometryCollection
 
 from gis.models import Layer, Feature, Property
 from accounts.models import User
@@ -78,7 +77,6 @@ class FileIngestor:
         ]
         # Bulk create Property instances
         Property.objects.bulk_create(properties)
-
         return layer.id
 
     @staticmethod
