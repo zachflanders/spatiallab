@@ -7,9 +7,11 @@ import Button from '@/components/Button';
 import { checkAuth, logout } from '@/app/accounts/auth';
 import { useAuth } from '../app/AuthContext'; // Adjust the import path as necessary
 
-interface HeaderProps {}
+interface HeaderProps {
+  className?: string;
+}
 
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC<HeaderProps> = ({ className }) => {
   const router = useRouter();
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
     useAuth();
@@ -23,7 +25,7 @@ const Header: React.FC<HeaderProps> = () => {
   };
 
   return (
-    <header className="p-4 shadow-md">
+    <header className={`${className} p-4 shadow-md`}>
       <div
         className="container mx-auto flex justify-between items-center"
         style={{ minHeight: 40 }}

@@ -1,17 +1,22 @@
 import json
+import logging
 import uuid
 from pathlib import Path
 
 import requests
 from django.conf import settings
 from django.db import connection
+from django.contrib.gis.db.models import Extent
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from google.cloud import storage
+from pyproj import Transformer
 from requests.auth import HTTPBasicAuth
 
-from gis.models import Property, Feature
+from gis.models import Property, Feature, Layer
 from gis.tasks import ingest_file_to_db_task
+
+logger = logging.getLogger(__name__)
 
 
 class GeoServerIngestor:
@@ -102,12 +107,14 @@ def upload_file(request):
         blob = bucket.blob(file_name)
         blob.upload_from_file(file)
         gcs_path = f"gs://{bucket.name}/{file_name}"
-        layer_id = ingest_file_to_db_task(gcs_path, file_stem, request.user.email)
+        layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
         geoserver_ingestor = GeoServerIngestor(layer_id)
         geoserver_ingestor.create_feature_view()
         geoserver_ingestor.create_datastore()
         geoserver_ingestor.create_feature_layer()
-        return JsonResponse({"message": "File uploaded successfully"})
+        return JsonResponse(
+            {"layer_id": layer_id, "message": "File uploaded successfully"}
+        )
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
@@ -118,6 +125,44 @@ def layer_view(request, layer_id):
         .values_list("key", flat=True)
         .distinct()
     )
+    extent = Feature.objects.filter(layer__id=layer_id).aggregate(Extent("geometry"))[
+        "geometry__extent"
+    ]
+    if extent:
+        minx = float(extent[0])
+        maxx = float(extent[2])
+        miny = float(extent[1])
+        maxy = float(extent[3])
+        minx, maxx = min(minx, maxx), max(minx, maxx)
+        miny, maxy = min(miny, maxy), max(miny, maxy)
+        logger.debug(
+            f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
+        )
+
+        logger.debug(
+            f"After transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
+        )
+        if minx < -180 or minx > 180 or maxx < -180 or maxx > 180:
+            logger.error("Longitude values are out of range. Adjusting to valid range.")
+            minx = max(min(minx, 180), -180)
+            maxx = max(min(maxx, 180), -180)
+            logger.debug(
+                f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
+            )
+
+        if miny < -90 or miny > 90 or maxy < -90 or maxy > 90:
+            logger.error("Latitude values are out of range. Adjusting to valid range.")
+            miny = max(min(miny, 90), -90)
+            maxy = max(min(maxy, 90), -90)
+            logger.debug(
+                f"Before transformation: minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy}"
+            )
+        transformer = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
+        minx, miny = transformer.transform(minx, miny)
+        maxx, maxy = transformer.transform(maxx, maxy)
+        transformed_extent = [minx, miny, maxx, maxy]
+    else:
+        transformed_extent = None
     table_data = [
         {
             "Feature ID": feature.id,
@@ -137,4 +182,10 @@ def layer_view(request, layer_id):
             "properties"
         )
     ]
-    return JsonResponse({"headers": list(unique_keys), "data": table_data})
+    return JsonResponse(
+        {
+            "headers": list(unique_keys),
+            "data": table_data,
+            "extent": transformed_extent,
+        }
+    )
