@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import environ
+from google.oauth2 import service_account
+
 
 # Initialize environment variables
 env = environ.Env()
@@ -27,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "accounts",
+    "gis",
     # Add your apps here
 ]
 
@@ -64,7 +67,7 @@ WSGI_APPLICATION = "spatiallab.wsgi.application"
 # Database configuration
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "NAME": env("DB_NAME", default="spatiallab"),
         "USER": env("DB_USER", default="postgres"),
         "PASSWORD": env("DB_PASSWORD", default="postgres"),
@@ -103,3 +106,17 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
+
+GCS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "credentials.json")
+)
+
+GCS_BUCKET_NAME = env("GCS_BUCKET_NAME")
+
+# Celery settings
+CELERY_BROKER_URL = "amqp://user:password@rabbitmq:5672//"
+CELERY_RESULT_BACKEND = "rpc://"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
