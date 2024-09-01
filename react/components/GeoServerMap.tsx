@@ -12,13 +12,23 @@ import 'ol/ol.css';
 
 export interface MapProps {
   layer: number;
+  extent?: [number, number, number, number];
 }
 
-const GeoServerMap: React.FC<MapProps> = ({ layer }) => {
+const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstance = useRef<Map | null>(null);
+  const vectorTileLayerRef = useRef<VectorTileLayer | null>(null);
 
   useEffect(() => {
     if (mapRef.current) {
+      const vectorTileLayer = new VectorTileLayer({
+        source: new VectorTileSource({
+          format: new MVT(),
+          url: `http://localhost/geoserver/gwc/service/tms/1.0.0/spatiallab%3Alayer_${layer}_features@EPSG%3A900913@pbf/{z}/{x}/{-y}.pbf`,
+        }),
+      });
+
       const map = new Map({
         target: mapRef.current,
         view: new View({
@@ -32,21 +42,35 @@ const GeoServerMap: React.FC<MapProps> = ({ layer }) => {
               url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             }),
           }),
-
-          new VectorTileLayer({
-            source: new VectorTileSource({
-              format: new MVT(),
-              url: `http://localhost/geoserver/gwc/service/tms/1.0.0/spatiallab%3Alayer_${layer}_features@EPSG%3A900913@pbf/{z}/{x}/{-y}.pbf`,
-            }),
-          }),
+          vectorTileLayer,
         ],
       });
+
+      mapInstance.current = map;
+      vectorTileLayerRef.current = vectorTileLayer;
 
       return () => {
         map.setTarget(null); // Clean up the map instance
       };
     }
-  }, []);
+  }, [layer]);
+
+  useEffect(() => {
+    if (mapInstance.current && extent) {
+      console.log(`extent: ${extent}`);
+      mapInstance.current
+        .getView()
+        .fit(extent, { size: mapInstance.current.getSize() });
+
+      // Refresh the vector tile layer source
+      if (vectorTileLayerRef.current) {
+        const source = vectorTileLayerRef.current.getSource();
+        if (source) {
+          source.refresh();
+        }
+      }
+    }
+  }, [extent]);
 
   return (
     <div style={{ height: 300 }}>

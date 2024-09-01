@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Button from './Button';
 import Input from './Input';
+import { useRouter } from 'next/navigation';
 
 const FileUploadForm: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -17,6 +21,7 @@ const FileUploadForm: React.FC = () => {
       console.error('No file selected');
       return;
     }
+    setUploading(true);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -28,8 +33,10 @@ const FileUploadForm: React.FC = () => {
         },
       });
       console.log('File uploaded successfully:', response.data);
+      router.push(`/layer/${response.data.layer_id}/`);
     } catch (error) {
       console.error('Error uploading file:', error);
+      setUploading(false);
     }
   };
 
@@ -39,11 +46,14 @@ const FileUploadForm: React.FC = () => {
       className="max-w-md mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white"
     >
       <h1 className="text-xl font-bold mb-4">Upload File</h1>
-      <div class="mb-4">
-        <input type="file" onChange={handleFileChange} />
+      <div className="mb-4">
+        <input type="file" onChange={handleFileChange} disabled={uploading} />
       </div>
 
-      <Button type="submit">Upload</Button>
+      <Button type="submit" disabled={uploading}>
+        Upload
+      </Button>
+      {uploading && <span>Uploading...</span>}
     </form>
   );
 };
