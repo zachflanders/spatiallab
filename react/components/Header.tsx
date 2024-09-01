@@ -39,16 +39,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           <div>
             <Button
               type="button"
-              className="py-2 px-4 rounded mr-4 bg-gray-500 bg-opacity-5 hover:bg-opacity-15"
+              className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold"
               onClick={() => {
                 router.push('/pricing');
               }}
             >
               Pricing
             </Button>
+            <span className="border-l border-gray-400 h-6 mx-2"></span>
             <Button
               type="button"
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded mr-1"
+              className="py-2 px-4 rounded mr-1 bg-black bg-opacity-0 hover:bg-opacity-5 text-bold"
               onClick={() => {
                 router.push('/login');
               }}
