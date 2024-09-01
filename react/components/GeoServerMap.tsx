@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
@@ -28,11 +28,12 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
           url: `http://localhost/geoserver/gwc/service/tms/1.0.0/spatiallab%3Alayer_${layer}_features@EPSG%3A900913@pbf/{z}/{x}/{-y}.pbf`,
         }),
       });
+
       const map = new Map({
         target: mapRef.current,
         view: new View({
-          center: undefined,
-          zoom: undefined,
+          center: [0, 0], // Center of the map, adjust as needed
+          zoom: 2, // Initial zoom level
         }),
         layers: [
           // Base layer (optional, can use OSM or other base layers)
@@ -55,12 +56,13 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
   }, [layer]);
 
   useEffect(() => {
-    if (mapInstance.current && extent && extent.length === 4) {
+    if (mapInstance.current && extent) {
       console.log(`extent: ${extent}`);
-      console.log(mapInstance.current.getSize());
       mapInstance.current
         .getView()
         .fit(extent, { size: mapInstance.current.getSize() });
+
+      // Refresh the vector tile layer source
       if (vectorTileLayerRef.current) {
         const source = vectorTileLayerRef.current.getSource();
         if (source) {

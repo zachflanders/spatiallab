@@ -46,7 +46,7 @@ const FileUploadForm: React.FC = () => {
       className="max-w-md mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white"
     >
       <h1 className="text-xl font-bold mb-4">Upload File</h1>
-      <div class="mb-4">
+      <div className="mb-4">
         <input type="file" onChange={handleFileChange} disabled={uploading} />
       </div>
 
