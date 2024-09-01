@@ -1,57 +1,58 @@
+import json
+import uuid
+from pathlib import Path
+
+import requests
+from django.conf import settings
 from django.db import connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from google.cloud import storage
-from django.conf import settings
-from gis.tasks import ingest_file_to_db
-import json
-import uuid
-
-from gis.models import Property, Feature
-
-import requests
 from requests.auth import HTTPBasicAuth
 
+from gis.models import Property, Feature
+from gis.tasks import ingest_file_to_db_task
 
-def create_feature_view(layer_id: int):
-    view_name = f"layer_{layer_id}_features"
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            CREATE OR REPLACE VIEW {view_name} AS
-            SELECT f.id, f.geometry, l.name AS layer_name
-            FROM gis_feature f
-            JOIN gis_layer l ON f.layer_id = l.id
-            WHERE f.layer_id = %s
-        """,
-            [layer_id],
+
+class GeoServerIngestor:
+
+    def __init__(
+        self,
+        layer_id: int,
+        geoserver_url: str = "http://geoserver:8080/geoserver",
+        workspace_name: str = "spatiallab",
+        username: str = "admin",
+        password: str = "password",
+    ) -> None:
+        self.layer_id = layer_id
+        self.geoserver_url = geoserver_url
+        self.workspace_name = workspace_name
+        self.store_name = f"layer_{self.layer_id}_store"
+        self.datastore_url = (
+            f"{self.geoserver_url}/rest/workspaces/{self.workspace_name}/datastores"
         )
+        self.layer_name = f"layer_{self.layer_id}_features"
+        self.username = username
+        self.password = password
 
+    def create_feature_view(self) -> None:
+        view_name = f"layer_{self.layer_id}_features"
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                CREATE OR REPLACE VIEW {view_name} AS
+                SELECT f.id, f.geometry, l.name AS layer_name
+                FROM gis_feature f
+                JOIN gis_layer l ON f.layer_id = l.id
+                WHERE f.layer_id = %s
+            """,
+                [self.layer_id],
+            )
 
-@csrf_exempt
-def upload_file(request):
-    # TODO: Refactor this function into smaller functions
-    if request.method == "POST" and request.FILES["file"]:
-        file = request.FILES["file"]
-        client = storage.Client(credentials=settings.GCS_CREDENTIALS)
-        bucket = client.bucket(settings.GCS_BUCKET_NAME)
-        file_name = f"{file.name}_{uuid.uuid4()}"
-        blob = bucket.blob(file_name)
-        blob.upload_from_file(file)
-        gcs_path = f"gs://{bucket.name}/{file_name}"
-        layer_id = ingest_file_to_db(gcs_path, file_name, request.user.email)
-        create_feature_view(layer_id)
-        geoserver_url = "http://geoserver:8080/geoserver"
-        # TODO: Don't hardcode the username and password
-        username = "admin"
-        password = "password"
-        workspace_name = "spatiallab"
-        store_name = f"layer_{layer_id}_store"
-        datastore_url = f"{geoserver_url}/rest/workspaces/{workspace_name}/datastores"
-
+    def create_datastore(self) -> None:
         datastore_data = f"""
         <dataStore>
-        <name>{store_name}</name>
+        <name>{self.store_name}</name>
         <connectionParameters>
             <host>postgres</host>
             <port>5432</port>
@@ -63,41 +64,49 @@ def upload_file(request):
         </connectionParameters>
         </dataStore>
         """
-
-        response = requests.post(
-            datastore_url,
+        requests.post(
+            self.datastore_url,
             data=datastore_data,
             headers={"Content-Type": "text/xml"},
-            auth=HTTPBasicAuth(username, password),
+            auth=HTTPBasicAuth(self.username, self.password),
         )
-        if response.status_code == 201:
-            print(f"PostGIS data store '{store_name}' created successfully.")
-        else:
-            print(f"Failed to create PostGIS data store: {response.content}")
 
-        layer_name = f"layer_{layer_id}_features"
-        layer_url = f"{geoserver_url}/rest/workspaces/{workspace_name}/datastores/{store_name}/featuretypes"
-
-        # TODO: Dynamically set the SRS based on the data
+    def create_feature_layer(self) -> None:
+        layer_url = f"{self.datastore_url}/{self.store_name}/featuretypes"
         layer_data = f"""
         <featureType>
-        <name>{layer_name}</name>
-        <nativeName>{layer_name}</nativeName>
+        <name>{self.layer_name}</name>
+        <nativeName>{self.layer_name}</nativeName>
         <srs>EPSG:4326</srs>  
         </featureType>
         """
-
-        response = requests.post(
+        requests.post(
             layer_url,
             data=layer_data,
             headers={"Content-Type": "text/xml"},
-            auth=HTTPBasicAuth(username, password),
+            auth=HTTPBasicAuth(self.username, self.password),
         )
-        if response.status_code == 201:
-            print(f"Layer '{layer_name}' published successfully.")
-        else:
-            print(f"Failed to publish layer: {response.content}")
 
+
+@csrf_exempt
+def upload_file(request):
+    # TODO: Refactor this function into smaller functions
+    if request.method == "POST" and request.FILES["file"]:
+        client = storage.Client(credentials=settings.GCS_CREDENTIALS)
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        file = request.FILES["file"]
+        file_path = Path(file.name)
+        file_extension = file_path.suffix
+        file_stem = file_path.stem
+        file_name = f"{file_stem}_{uuid.uuid4()}{file_extension}"
+        blob = bucket.blob(file_name)
+        blob.upload_from_file(file)
+        gcs_path = f"gs://{bucket.name}/{file_name}"
+        layer_id = ingest_file_to_db_task(gcs_path, file_stem, request.user.email)
+        geoserver_ingestor = GeoServerIngestor(layer_id)
+        geoserver_ingestor.create_feature_view()
+        geoserver_ingestor.create_datastore()
+        geoserver_ingestor.create_feature_layer()
         return JsonResponse({"message": "File uploaded successfully"})
     return JsonResponse({"error": "Invalid request"}, status=400)
 

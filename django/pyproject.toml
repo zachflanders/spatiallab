@@ -15,6 +15,7 @@ django-cors-headers = "^4.4.0"
 google-cloud-storage = "^2.18.2"
 celery = "^5.4.0"
 django-celery-beat = "^2.7.0"
+pyproj = "^3.6.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0" 
