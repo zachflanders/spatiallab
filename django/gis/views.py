@@ -175,3 +175,17 @@ def layer_view(request, layer_id):
             "extent": transformed_extent,
         }
     )
+
+
+@csrf_exempt
+def layers_view(request):
+    layers = [
+        {
+            "id": layer.id,
+            "name": layer.name,
+            "created_at": layer.created_at,
+            "modified_at": layer.modified_at,
+        }
+        for layer in request.user.layers.all()
+    ]
+    return JsonResponse({"layers": layers})
