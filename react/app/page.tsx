@@ -29,7 +29,7 @@ export default function Home() {
           <div className="space-y-24 py-24 mb-0">
             <div
               className="text-center"
-              style={{ marginTop: 180, marginBottom: 180 }}
+              style={{ marginTop: 130, marginBottom: 150 }}
             >
               <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 pb-6">
                 GIS you'll{' '}
@@ -50,7 +50,7 @@ export default function Home() {
                 <img
                   src="/app.png"
                   alt="Data in the cloud"
-                  className="rounded-lg shadow-lg bg-slate-100 border border-gray-300"
+                  className="rounded-lg shadow-xl bg-slate-100 border border-gray-300"
                   height={450}
                 />
               </div>
