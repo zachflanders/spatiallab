@@ -33,7 +33,7 @@ const FileUploadForm: React.FC = () => {
         },
       });
       console.log('File uploaded successfully:', response.data);
-      router.push(`/layer/${response.data.layer_id}/`);
+      router.push(`/data?selectedLayer=${response.data.layer_id}`);
     } catch (error) {
       console.error('Error uploading file:', error);
       setUploading(false);
