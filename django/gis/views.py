@@ -14,13 +14,15 @@ from django.views.decorators.csrf import csrf_exempt
 from google.cloud import storage
 from pyproj import Transformer
 from requests.auth import HTTPBasicAuth
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from gis.models import Property, Feature, Layer
-from gis.serializers import LayerSerializer
+from gis.models import Property, Feature, Layer, Project, ProjectLayer
+from gis.serializers import LayerSerializer, ProjectSerializer, ProjectLayerSerializer
 from gis.tasks import ingest_file_to_db_task
+from gis.permissions import IsOwner
+
 
 logger = logging.getLogger(__name__)
 
@@ -234,3 +236,24 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def get_queryset(self):
+        return Project.objects.filter(owner=self.request.user)
+
+
+class ProjectLayerViewSet(viewsets.ModelViewSet):
+    serializer_class = ProjectLayerSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        return ProjectLayer.objects.filter(project__owner=self.request.user)
