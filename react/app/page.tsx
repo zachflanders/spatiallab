@@ -127,7 +127,34 @@ export default function Home() {
       ) : (
         <div className="py-24">
           <div className="max-w-3xl mx-auto">
-            <FileUploadForm />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div
+                className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+                onClick={() => {
+                  router.push('/upload');
+                }}
+              >
+                <h3 className="text-2xl font-semibold text-green-800">
+                  Upload Data
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Add data to your data catalog.
+                </p>
+              </div>
+              <div
+                className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+                onClick={() => {
+                  router.push('/data');
+                }}
+              >
+                <h3 className="text-2xl font-semibold text-blue-800">
+                  Data Catalog
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  View and organize your data.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

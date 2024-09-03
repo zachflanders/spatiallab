@@ -32,8 +32,8 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
       const map = new Map({
         target: mapRef.current,
         view: new View({
-          center: [0, 0], // Center of the map, adjust as needed
-          zoom: 2, // Initial zoom level
+          center: undefined, // Center of the map, adjust as needed
+          zoom: undefined, // Initial zoom level
         }),
         layers: [
           // Base layer (optional, can use OSM or other base layers)
@@ -74,7 +74,7 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
 
   return (
     <div style={{ height: 300 }}>
-      <div ref={mapRef} className="w-full h-full"></div>
+      <div ref={mapRef} className="w-full h-full bg-gray-200"></div>
     </div>
   );
 };
