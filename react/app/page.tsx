@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 import SignupForm from './accounts/SignupForm';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
@@ -32,7 +33,7 @@ export default function Home() {
               style={{ marginTop: 130, marginBottom: 150 }}
             >
               <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 pb-6">
-                GIS you'll{' '}
+                GIS you&apos;ll{' '}
                 <u
                   className="underline decoration-4 decoration-blue-300"
                   style={{
@@ -125,38 +126,40 @@ export default function Home() {
           <Footer />
         </div>
       ) : (
-        <div className="py-24">
-          <div className="max-w-3xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div
-                className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
-                onClick={() => {
-                  router.push('/upload');
-                }}
-              >
-                <h3 className="text-2xl font-semibold text-green-800">
-                  Upload Data
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Add data to your data catalog.
-                </p>
-              </div>
-              <div
-                className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
-                onClick={() => {
-                  router.push('/data');
-                }}
-              >
-                <h3 className="text-2xl font-semibold text-blue-800">
-                  Data Catalog
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  View and organize your data.
-                </p>
+        <Suspense>
+          <div className="py-24">
+            <div className="max-w-3xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div
+                  className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+                  onClick={() => {
+                    router.push('/upload');
+                  }}
+                >
+                  <h3 className="text-2xl font-semibold text-green-800">
+                    Upload Data
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Add data to your data catalog.
+                  </p>
+                </div>
+                <div
+                  className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+                  onClick={() => {
+                    router.push('/data');
+                  }}
+                >
+                  <h3 className="text-2xl font-semibold text-blue-800">
+                    Data Catalog
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    View and organize your data.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Suspense>
       )}
     </main>
   );

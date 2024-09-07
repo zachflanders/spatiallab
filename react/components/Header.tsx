@@ -72,6 +72,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               type="button"
               className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
               onClick={() => {
+                router.push('/projects');
+              }}
+            >
+              Projects
+            </Button>
+            <Button
+              type="button"
+              className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
+              onClick={() => {
                 router.push('/data');
               }}
             >

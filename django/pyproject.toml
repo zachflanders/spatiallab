@@ -18,6 +18,9 @@ django-celery-beat = "^2.7.0"
 pyproj = "^3.6.1"
 shapely = "^2.0.6"
 fiona = "^1.9.6"
+google-auth = "^2.34.0"
+google-auth-oauthlib = "^1.2.1"
+google-auth-httplib2 = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0" 

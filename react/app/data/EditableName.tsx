@@ -3,17 +3,24 @@ import React, { useState, useEffect } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getCookie } from '../accounts/auth';
 
-const EditableName = ({
+interface EditableNameProps {
+  initialName: string;
+  layerId: number;
+  layers: any[];
+  setLayers: React.Dispatch<React.SetStateAction<any[]>>;
+  sortLayers: (layers: any[]) => any[];
+}
+
+const EditableName: React.FC<EditableNameProps> = ({
   initialName,
   layerId,
-  user,
   layers,
   setLayers,
   sortLayers,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(initialName);
-  const inputRef = React.useRef(null);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   const csrftoken = getCookie('csrftoken');
 
@@ -21,7 +28,7 @@ const EditableName = ({
     setIsEditing(true);
   };
 
-  const handleNameChange = (e) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
   };
 
@@ -34,7 +41,7 @@ const EditableName = ({
           'Content-Type': 'application/json',
           'X-CSRFToken': csrftoken || '',
         },
-        body: JSON.stringify({ name, user }),
+        body: JSON.stringify({ name }),
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -51,7 +58,7 @@ const EditableName = ({
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleBlur();
     }

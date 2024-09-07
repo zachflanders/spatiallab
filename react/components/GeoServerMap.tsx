@@ -12,7 +12,7 @@ import 'ol/ol.css';
 
 export interface MapProps {
   layer: number;
-  extent?: [number, number, number, number];
+  extent?: [number, number, number, number] | [];
 }
 
 const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
@@ -50,7 +50,7 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
       vectorTileLayerRef.current = vectorTileLayer;
 
       return () => {
-        map.setTarget(null); // Clean up the map instance
+        map.setTarget(''); // Clean up the map instance
       };
     }
   }, [layer]);
