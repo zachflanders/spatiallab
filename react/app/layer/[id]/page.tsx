@@ -20,7 +20,7 @@ export default function Page({ params }: { params: { id: number } }) {
       setData(responseData.data);
       setExtent(responseData.extent);
     });
-  }, []);
+  }, [params.id]);
   return (
     <div>
       <div className="m-8" style={{ minHeight: 100 }}>

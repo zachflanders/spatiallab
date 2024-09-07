@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { getCookie } from '../accounts/auth';
 import { headers } from 'next/headers';
@@ -9,8 +9,12 @@ const AddProject: React.FC = () => {
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
-  const csrftoken = getCookie('csrftoken');
+  useEffect(() => {
+    const token = getCookie('csrftoken');
+    setCsrfToken(token);
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ const AddProject: React.FC = () => {
         },
         {
           headers: {
-            'X-CSRFToken': csrftoken,
+            'X-CSRFToken': csrfToken,
           },
         },
       );

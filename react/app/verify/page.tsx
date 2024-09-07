@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../AuthContext';
 import axios from 'axios';
@@ -36,7 +36,7 @@ const Verify = () => {
     } catch (error) {
       console.error('Error:', error);
     }
-  }, []);
+  }, [token, uid]);
 
   const resend_email = async (emai: string) => {
     try {
@@ -60,8 +60,8 @@ const Verify = () => {
       }
       setEmailResent(true);
     } catch (error) {
-      if (error.response.data) {
-        setMessage(error.response.data.message);
+      if ((error as any).response.data) {
+        setMessage((error as any).response.data.message);
       }
     }
   };
@@ -98,14 +98,16 @@ const Verify = () => {
   );
 
   return (
-    <div className="m-8">
-      {message}
-      {isLoading
-        ? 'Verifying email...'
-        : isSuccess
-          ? 'Email verified.'
-          : error_html}
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="m-8">
+        {message}
+        {isLoading
+          ? 'Verifying email...'
+          : isSuccess
+            ? 'Email verified.'
+            : error_html}
+      </div>
+    </Suspense>
   );
 };
 
