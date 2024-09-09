@@ -26,15 +26,18 @@ jobs:
       run: |
         gcloud auth configure-docker
 
-    - name: Build and push Docker image
+    - name: Build and push Django Docker image
       run: |
         docker build \
           --build-arg EMAIL_HOST=${{ secrets.EMAIL_HOST }} \
           --build-arg EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }} \
           --build-arg EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }} \
           -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app ./django
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app
+    
+    - name: Build and push React Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app
 
     - name: Deploy Django to Cloud Run
