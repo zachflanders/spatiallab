@@ -28,7 +28,11 @@ jobs:
 
     - name: Build and push Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app ./django
+        docker build \
+          --build-arg EMAIL_HOST=${{ secrets.EMAIL_HOST }} \
+          --build-arg EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }} \
+          --build-arg EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }} \
+          -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app ./django
         docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app
