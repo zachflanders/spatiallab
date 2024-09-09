@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import environ
@@ -122,8 +123,9 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
-GCS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "credentials.json")
+service_account_info = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+GCS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+    service_account_info
 )
 
 GCS_BUCKET_NAME = env("GCS_BUCKET_NAME")
