@@ -41,7 +41,7 @@ jobs:
           --platform managed \
           --allow-unauthenticated \
           --memory 512Mi
-          --add-cloudsql-instances ${{ GCP_PROJECT_ID }}
+          --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Deploy React to Cloud Run
       run: |
