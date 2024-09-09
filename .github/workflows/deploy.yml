@@ -27,7 +27,6 @@ jobs:
         gcloud auth configure-docker
 
     - name: Build and push Django Docker image
-      env:
         env:
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
