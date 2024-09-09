@@ -37,6 +37,15 @@ RUN poetry install --no-root
 # Copy the rest of the application code into the container
 COPY . .
 
+# Accept build argument for Base64-encoded Google credentials
+ARG GOOGLE_CREDENTIALS
+
+# Decode the Base64 credentials and set it as an environment variable
+RUN echo $GOOGLE_CREDENTIALS | base64 --decode > /app/credentials.json
+
+# Now the credentials are stored at /app/credentials.json and can be used by the app
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+
 # Collect static files
 RUN poetry run python manage.py collectstatic --noinput
 
