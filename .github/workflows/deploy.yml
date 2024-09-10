@@ -27,26 +27,26 @@ jobs:
     - name: Create django env file
       run: |
         touch ./django/.env
-        echo DB_HOST="${{ secrets.DB_HOST }}" >> .env
-        echo DB_NAME="${{ secrets.DB_NAME }}" >> .env
-        echo DB_PASSWORD="${{ secrets.DB_PASSWORD }}" >> .env
-        echo DB_USER="${{ secrets.DB_USER }}" >> .env
-        echo DJANGO_ALLOWED_HOSTS="${{ secrets.DJANGO_ALLOWED_HOSTS }}" >> .env
-        echo EMAIL_HOST="${{ secrets.EMAIL_HOST }}" >> .env
-        echo EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
-        echo EMAIL_HOST_USER="${{ secrets.EMAIL_HOST_USER }}" >> .env
-        echo GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
-        echo GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}" >> .env
-        echo GEOSERVER_URL="${{ secrets.GEOSERVER_URL }}" >> .env
+        echo 'DB_HOST=${{ secrets.DB_HOST }}' >> .env
+        echo 'DB_NAME=${{ secrets.DB_NAME }}' >> .env
+        echo 'DB_PASSWORD=${{ secrets.DB_PASSWORD }}' >> .env
+        echo 'DB_USER=${{ secrets.DB_USER }}' >> .env
+        echo 'DJANGO_ALLOWED_HOSTS=${{ secrets.DJANGO_ALLOWED_HOSTS }}' >> .env
+        echo 'EMAIL_HOST=${{ secrets.EMAIL_HOST }}' >> .env
+        echo 'EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}' >> .env
+        echo 'EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}' >> .env
+        echo 'GOOGLE_CREDENTIALS=${{ secrets.GOOGLE_CREDENTIALS }}' >> .env
+        echo 'GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}' >> .env
+        echo 'GEOSERVER_URL=${{ secrets.GEOSERVER_URL }}' >> .env
         cat ./django/.env
 
     - name: Create react env file
       run: |
         touch ./react/.env
-        echo NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
-        echo NEXT_PUBLIC_GEOSERVER_URL="${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}" >> .env
-        echo NEXT_PUBLIC_PROTOCOL="${{ secrets.NEXT_PUBLIC_PROTOCOL }}" >> .env
-        echo NEXT_PUBLIC_ROOT_URL="${{ secrets.NEXT_PUBLIC_ROOT_URL }}" >> .env
+        echo 'NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}' >> .env
+        echo 'NEXT_PUBLIC_GEOSERVER_URL=${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}' >> .env
+        echo 'NEXT_PUBLIC_PROTOCOL=${{ secrets.NEXT_PUBLIC_PROTOCOL }}' >> .env
+        echo 'NEXT_PUBLIC_ROOT_URL=${{ secrets.NEXT_PUBLIC_ROOT_URL }}' >> .env
         cat ./react/.env
 
     - name: Build and push Django Docker image
