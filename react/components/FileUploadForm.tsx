@@ -27,11 +27,15 @@ const FileUploadForm: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const response = await axios.post('/api/gis/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/upload/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
-      });
+      );
       console.log('File uploaded successfully:', response.data);
       router.push(`/data?selectedLayer=${response.data.layer_id}`);
     } catch (error) {

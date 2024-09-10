@@ -4,7 +4,7 @@ services:
       context: ./django
       dockerfile: Dockerfile
     container_name: django
-    command: ["poetry", "run", "gunicorn", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8000"]
+    command: ["poetry", "run", "gunicorn", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8080"]
     volumes:
       - ./django:/app
     environment:
@@ -13,7 +13,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/spatiallab
       - CELERY_BROKER_URL=pyamqp://rabbitmq
     expose:
-      - "8000"
+      - "8080"
     depends_on:
       - postgres
       - rabbitmq

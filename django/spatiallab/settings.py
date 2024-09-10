@@ -6,9 +6,14 @@ from google.oauth2 import service_account
 
 # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env(
-    env_file=os.path.join(Path(__file__).resolve().parent.parent, ".env")
-)
+env_file = os.path.join(Path(__file__).resolve().parent.parent, ".env")
+environ.Env.read_env(env_file=env_file)
+# Manually override existing environment variables with those from the .env file
+with open(env_file, encoding="utf-8") as f:
+    for line in f:
+        if line.strip() and not line.startswith("#"):
+            key, value = line.strip().split("=", 1)
+            os.environ[key] = value
 
 
 # Base directory
@@ -135,3 +140,5 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
+
+GEOSERVER_URL = env("GEOSERVER_URL")

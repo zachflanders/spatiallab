@@ -23,7 +23,7 @@ const AddProject: React.FC = () => {
 
     try {
       const response = await axios.post(
-        '/api/gis/projects/',
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/projects/`,
         {
           name,
           description,

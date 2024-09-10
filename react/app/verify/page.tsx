@@ -22,7 +22,9 @@ const Verify = () => {
 
   useEffect(() => {
     try {
-      fetch(`/api/accounts/activate/${uid}/${token}/`)
+      fetch(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/activate/${uid}/${token}/`,
+      )
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
@@ -43,7 +45,7 @@ const Verify = () => {
       const formData = new FormData();
       formData.append('email', email);
       const response = await axios.post(
-        '/api/accounts/resend_activation/',
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/resend_activation/`,
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

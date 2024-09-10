@@ -12,14 +12,18 @@ export default function Page({ params }: { params: { id: number } }) {
 
   useEffect(() => {
     // Fetch the data from the backend
-    axios.get(`/api/gis/layer/${params.id}/`).then((response) => {
-      const responseData = response.data;
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${params.id}/`,
+      )
+      .then((response) => {
+        const responseData = response.data;
 
-      // Assuming the response is structured as explained in the previous messages
-      setHeaders(['Feature ID', ...responseData.headers]);
-      setData(responseData.data);
-      setExtent(responseData.extent);
-    });
+        // Assuming the response is structured as explained in the previous messages
+        setHeaders(['Feature ID', ...responseData.headers]);
+        setData(responseData.data);
+        setExtent(responseData.extent);
+      });
   }, [params.id]);
   return (
     <div>

@@ -37,23 +37,27 @@ const Page: React.FC = () => {
 
   useEffect(() => {
     // Fetch the data from the backend
-    axios.get('/api/gis/layers/').then((response) => {
-      const responseData = response.data;
-      const sortedLayers = sortLayers(responseData.layers);
-      setLayers(sortedLayers);
+    axios
+      .get(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layers/`,
+      )
+      .then((response) => {
+        const responseData = response.data;
+        const sortedLayers = sortLayers(responseData.layers);
+        setLayers(sortedLayers);
 
-      const selectedLayerParam = searchParams.get('selectedLayer');
-      if (selectedLayerParam) {
-        const layer = sortedLayers.find(
-          (layer) => layer.id === parseInt(selectedLayerParam),
-        );
-        if (layer) {
-          handleSelection(layer);
+        const selectedLayerParam = searchParams.get('selectedLayer');
+        if (selectedLayerParam) {
+          const layer = sortedLayers.find(
+            (layer) => layer.id === parseInt(selectedLayerParam),
+          );
+          if (layer) {
+            handleSelection(layer);
+          }
+        } else {
+          handleSelection(sortedLayers[0]);
         }
-      } else {
-        handleSelection(sortedLayers[0]);
-      }
-    });
+      });
   }, [searchParams]);
 
   const handleSelection = (layer: Layer, page = 1, pageSize = 10) => {
@@ -62,9 +66,12 @@ const Page: React.FC = () => {
     setData([]);
     setExtent([]);
     axios
-      .get(`/api/gis/layer/${layer.id}/`, {
-        params: { page, pageSize: pageSize },
-      })
+      .get(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${layer.id}/`,
+        {
+          params: { page, pageSize: pageSize },
+        },
+      )
       .then((response) => {
         const responseData = response.data;
         setHeaders(['Feature ID', ...responseData.headers]);
@@ -82,17 +89,24 @@ const Page: React.FC = () => {
   const handleDelete = () => {
     console.log('Deleting layer:', selectedLayer?.id);
     axios
-      .delete(`/api/gis/layer/${selectedLayer?.id}/`, {
-        headers: { 'X-CSRFToken': csrftoken },
-      })
+      .delete(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${selectedLayer?.id}/`,
+        {
+          headers: { 'X-CSRFToken': csrftoken },
+        },
+      )
       .then((response) => {
         setLayers(
           sortLayers(layers.filter((layer) => layer.id !== selectedLayer?.id)),
         );
-        axios.get('/api/gis/layers/').then((response) => {
-          const responseData = response.data;
-          handleSelection(responseData.layers[0]);
-        });
+        axios
+          .get(
+            `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layers/`,
+          )
+          .then((response) => {
+            const responseData = response.data;
+            handleSelection(responseData.layers[0]);
+          });
       });
   };
 

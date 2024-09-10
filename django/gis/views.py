@@ -40,6 +40,7 @@ class GeoServerIngestor:
         self.layer_id = layer_id
         self.geoserver_url = geoserver_url
         self.workspace_name = workspace_name
+        self.workspace_url = f"{self.geoserver_url}/rest/workspaces"
         self.store_name = f"layer_{self.layer_id}_store"
         self.datastore_url = (
             f"{self.geoserver_url}/rest/workspaces/{self.workspace_name}/datastores"
@@ -60,6 +61,27 @@ class GeoServerIngestor:
                 WHERE f.layer_id = %s
             """,
                 [self.layer_id],
+            )
+
+    def create_workspace(self) -> None:
+        logger.info("Creating workspace")
+        logger.info(f"Workspace URL: {self.workspace_url}")
+        response = requests.get(
+            f"{self.workspace_url}/{self.workspace_name}",
+            auth=HTTPBasicAuth(self.username, self.password),
+        )
+        logger.info(f"Workspace response: {response.status_code}")
+        if response.status_code == 404:
+            workspace_data = f"""
+            <workspace>
+                <name>{self.workspace_name}</name>
+            </workspace>
+            """
+            requests.post(
+                self.workspace_url,
+                data=workspace_data,
+                headers={"Content-Type": "text/xml"},
+                auth=HTTPBasicAuth(self.username, self.password),
             )
 
     def create_datastore(self) -> None:
@@ -116,8 +138,10 @@ def upload_file(request):
         blob.upload_from_file(file)
         gcs_path = f"gs://{bucket.name}/{file_name}"
         layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
-        geoserver_ingestor = GeoServerIngestor(layer_id)
+        geoserver_url = settings.GEOSERVER_URL
+        geoserver_ingestor = GeoServerIngestor(layer_id, geoserver_url)
         geoserver_ingestor.create_feature_view()
+        geoserver_ingestor.create_workspace()
         geoserver_ingestor.create_datastore()
         geoserver_ingestor.create_feature_layer()
         return JsonResponse(
