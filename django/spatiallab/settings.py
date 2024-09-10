@@ -96,6 +96,13 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = "accounts.User"
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_COOKIE_SAMESITE = "None"  # Required for cross-origin requests
+SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
+SESSION_COOKIE_DOMAIN = (
+    ".spatiallab.app"  # Allows cookies to be shared across subdomains
+)
+SESSION_COOKIE_AGE = 1209600  # Optional: set cookie expiration (2 weeks)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 LOGGING = {
     "version": 1,
@@ -120,6 +127,7 @@ STATIC_ROOT = BASE_DIR / "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_CREDENTIALS = True
+
 
 CORS_ALLOWED_ORIGINS = [
     "https://spatiallab.app",
