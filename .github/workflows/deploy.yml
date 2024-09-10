@@ -24,7 +24,7 @@ jobs:
 
     - name: Authenticate Docker to GCP
       run: |
-        gcloud auth configure-docker
+        gcloud auth configure-docker gcr.io
 
     - name: Build and push Django Docker image
       env:
