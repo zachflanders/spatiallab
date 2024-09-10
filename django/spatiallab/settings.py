@@ -142,4 +142,8 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
-GEOSERVER_URL = env("GEOSERVER_URL", default="http://geoserver:8080/geoserver")
+GEOSERVER_URL = env(
+    "GEOSERVER_URL", default="https://geoserver.spatiallab.app/geoserver"
+)
+GEOSERVER_ADMIN_USER = env("GEOSERVER_ADMIN_USER", default="admin")
+GEOSERVER_ADMIN_PASSWORD = env("GEOSERVER_ADMIN_PASSWORD", default="geoserver")
