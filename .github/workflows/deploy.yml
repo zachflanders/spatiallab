@@ -49,6 +49,11 @@ jobs:
         --platform linux/amd64 \
         -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app
+      env:
+        NEXT_PUBLIC_PROTOCOL: ${{ secrets.NEXT_PUBLIC_PROTOCOL }}
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        NEXT_PUBLIC_ROOT_URL: ${{ secrets.NEXT_PUBLIC_ROOT_URL }}
+        NEXT_PUBLIC_GEOSERVER_URL: ${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}
     
     - name: Execute Django Migrations Job
       run: |
