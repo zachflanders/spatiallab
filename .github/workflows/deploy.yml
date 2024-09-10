@@ -75,6 +75,6 @@ jobs:
           --region ${{ secrets.GCP_REGION }} \
           --platform managed \
           --allow-unauthenticated \
-          --memory 1Gi
+          --memory 1Gi \
           --set-env-vars NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }},NEXT_PUBLIC_ROOT_URL=${{ secrets.NEXT_PUBLIC_ROOT_URL }},NEXT_PUBLIC_PROTOCOL=${{ secrets.NEXT_PUBLIC_PROTOCOL }},NEXT_PUBLIC_GEOSERVER_URL=${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}
 
