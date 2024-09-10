@@ -33,6 +33,11 @@ services:
   react:
     build:
       context: ./react
+      args:
+        NEXT_PUBLIC_PROTOCOL: http
+        NEXT_PUBLIC_ROOT_URL: localhost
+        NEXT_PUBLIC_API_URL: localhost/api
+        NEXT_PUBLIC_GEOSERVER_URL: localhost/geoserver
     container_name: react
     volumes:
       - ./react:/app

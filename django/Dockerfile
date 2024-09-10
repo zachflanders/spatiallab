@@ -21,7 +21,7 @@ ENV GCS_BUCKET_NAME=$GCS_BUCKET_NAME
 WORKDIR /app
 
 # Decode the Base64 credentials and set it as an environment variable
-RUN echo $GOOGLE_CREDENTIALS | base64 --decode > /app/credentials.json
+RUN if [ -n "$GOOGLE_CREDENTIALS" ]; then echo $GOOGLE_CREDENTIALS | base64 --decode > /app/credentials.json; fi
 
 # Now the credentials are stored at /app/credentials.json and can be used by the app
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json

@@ -119,8 +119,13 @@ STATIC_ROOT = BASE_DIR / "static"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# TODO update this before deploying
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://spatiallab.app",
+    "http://localhost",
+]
+
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")

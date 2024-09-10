@@ -127,8 +127,10 @@ class GeoServerIngestor:
 def upload_file(request):
     # TODO: Refactor this function into smaller functions
     if request.method == "POST" and request.FILES["file"]:
+        logger.info("Uploading file to GCS")
         client = storage.Client(credentials=settings.GCS_CREDENTIALS)
         bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        logger.info(f"Bucket: {bucket.name}")
         file = request.FILES["file"]
         file_path = Path(file.name)
         file_extension = file_path.suffix
@@ -137,6 +139,7 @@ def upload_file(request):
         blob = bucket.blob(file_name)
         blob.upload_from_file(file)
         gcs_path = f"gs://{bucket.name}/{file_name}"
+        logger.info(f"File uploaded to GCS: {gcs_path}")
         layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
         geoserver_url = settings.GEOSERVER_URL
         geoserver_ingestor = GeoServerIngestor(layer_id, geoserver_url)
