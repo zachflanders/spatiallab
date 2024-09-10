@@ -65,12 +65,7 @@ jobs:
           --allow-unauthenticated \
           --memory 512Mi \
           --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION }}:${{ secrets.DB_NAME }} \
-          --set-env-vars \ 
-          DJANGO_ALLOWED_HOSTS="${{ secrets.DJANGO_ALLOWED_HOSTS }}",\
-          DB_HOST="${{ secrets.DB_HOST }}"",\
-          DB_NAME="${{ secrets.DB_NAME }}",\
-          DB_USER="${{ secrets.DB_USER }}",\
-          DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
+          --set-env-vars DJANGO_ALLOWED_HOSTS="${{ secrets.DJANGO_ALLOWED_HOSTS }}",DB_HOST="${{ secrets.DB_HOST }}"",DB_NAME="${{ secrets.DB_NAME }}",DB_USER="${{ secrets.DB_USER }}",DB_PASSWORD='${{ secrets.DB_PASSWORD }}' 
 
     - name: Deploy React to Cloud Run
       run: |
@@ -81,9 +76,5 @@ jobs:
           --platform managed \
           --allow-unauthenticated \
           --memory 1Gi
-          --set-env-vars \
-          NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }},\
-          NEXT_PUBLIC_ROOT_URL=${{ secrets.NEXT_PUBLIC_ROOT_URL }},\
-          NEXT_PUBLIC_PROTOCOL=${{ secrets.NEXT_PUBLIC_PROTOCOL }},\
-          NEXT_PUBLIC_GEOSERVER_URL=${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}
+          --set-env-vars NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }},NEXT_PUBLIC_ROOT_URL=${{ secrets.NEXT_PUBLIC_ROOT_URL }},NEXT_PUBLIC_PROTOCOL=${{ secrets.NEXT_PUBLIC_PROTOCOL }},NEXT_PUBLIC_GEOSERVER_URL=${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}
 
