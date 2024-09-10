@@ -91,7 +91,7 @@ jobs:
 
     - name: Deploy Geoserver to Cloud Run
       run: |
-        gcloud run deploy react-app \
+        gcloud run deploy geoserver-app \
           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/geoserver-app:latest \
           --project ${{ secrets.GCP_PROJECT_ID }} \
           --region ${{ secrets.GCP_REGION }} \
