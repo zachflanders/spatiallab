@@ -24,7 +24,7 @@ jobs:
       run: |
         gcloud auth configure-docker gcr.io
     
-    - name: 'Create django env file'
+    - name: Create django env file
       run: |
         touch ./django/.env
         echo DB_HOST="${{ secrets.DB_HOST }}" >> .env
@@ -38,16 +38,16 @@ jobs:
         echo GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" >> .env
         echo GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}" >> .env
         echo GEOSERVER_URL="${{ secrets.GEOSERVER_URL }}" >> .env
-        cat .env
+        cat ./django/.env
 
-    - name: 'Create react env file'
+    - name: Create react env file
       run: |
         touch ./react/.env
         echo NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
         echo NEXT_PUBLIC_GEOSERVER_URL="${{ secrets.NEXT_PUBLIC_GEOSERVER_URL }}" >> .env
         echo NEXT_PUBLIC_PROTOCOL="${{ secrets.NEXT_PUBLIC_PROTOCOL }}" >> .env
         echo NEXT_PUBLIC_ROOT_URL="${{ secrets.NEXT_PUBLIC_ROOT_URL }}" >> .env
-        cat .env
+        cat ./react/.env
 
     - name: Build and push Django Docker image
       env:
