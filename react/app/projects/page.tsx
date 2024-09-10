@@ -32,6 +32,7 @@ const AddProject: React.FC = () => {
           headers: {
             'X-CSRFToken': csrfToken,
           },
+          withCredentials: true,
         },
       );
       setSuccess('Project added successfully!');
