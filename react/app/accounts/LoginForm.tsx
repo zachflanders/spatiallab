@@ -17,15 +17,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
       const formData = new FormData();
       formData.append('email', email);
       formData.append('password', password);
-      const response = await axios.post('/api/accounts/login/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/login/`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
       if (response.data.success) {
-        console.log('Logged in:', response.data);
         onLoginSuccess();
       }
     } catch (error) {
-      console.error('There was an error logging in:', error);
       // Handle login error
     }
   };

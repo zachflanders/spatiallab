@@ -1,6 +1,8 @@
 export async function checkAuth() {
   try {
-    const response = await fetch('/api/accounts/is_authenticated/');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/is_authenticated/`,
+    );
     if (response.ok) {
       const data = await response.json();
       console.log(data);
@@ -15,7 +17,9 @@ export async function checkAuth() {
 export const logout = async () => {
   console.log('logging out');
   try {
-    const response = await fetch('/api/accounts/logout/');
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/logout/`,
+    );
     if (response.ok) {
       return true;
     }

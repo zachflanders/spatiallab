@@ -17,14 +17,14 @@ ENV EMAIL_HOST_PASSWORD=$EMAIL_HOST_PASSWORD
 ENV GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS
 ENV GCS_BUCKET_NAME=$GCS_BUCKET_NAME
 
+# Set working directory
+WORKDIR /app
+
 # Decode the Base64 credentials and set it as an environment variable
 RUN echo $GOOGLE_CREDENTIALS | base64 --decode > /app/credentials.json
 
 # Now the credentials are stored at /app/credentials.json and can be used by the app
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
-
-# Set working directory
-WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
@@ -59,7 +59,7 @@ COPY . .
 RUN poetry run python manage.py collectstatic --noinput
 
 # Expose the port that the application will run on
-EXPOSE 8000
+EXPOSE 8080
 
 # Command to run the application
-CMD ["poetry", "run", "gunicorn", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["poetry", "run", "gunicorn", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8080"]

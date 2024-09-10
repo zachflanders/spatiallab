@@ -25,14 +25,16 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       formData.append('email', email);
       formData.append('password1', password);
       formData.append('password2', passwordConfirm);
-      const response = await axios.post('/api/accounts/signup/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      console.log('Signed up:', response.data);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/signup/`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
       onSuccess();
       // Handle successful signup
     } catch (error) {
-      console.error('There was an error signing up:', error);
       // Handle signup error
     }
   };

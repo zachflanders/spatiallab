@@ -35,14 +35,17 @@ const EditableName: React.FC<EditableNameProps> = ({
   const handleBlur = async () => {
     setIsEditing(false);
     try {
-      const response = await fetch(`/api/gis/layer/${layerId}/`, {
-        method: 'PUT', // or 'PUT' depending on your API
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrftoken || '',
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${layerId}/`,
+        {
+          method: 'PUT', // or 'PUT' depending on your API
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken || '',
+          },
+          body: JSON.stringify({ name }),
         },
-        body: JSON.stringify({ name }),
-      });
+      );
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }

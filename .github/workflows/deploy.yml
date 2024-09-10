@@ -41,29 +41,41 @@ jobs:
         --build-arg EMAIL_HOST_PASSWORD="${{ secrets.EMAIL_HOST_PASSWORD }}" \
         --build-arg GOOGLE_CREDENTIALS="${{ secrets.GOOGLE_CREDENTIALS }}" \
         --build-arg GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}" \
+        --platform linux/amd64 \
         -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app ./django
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app
     
     - name: Build and push React Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
+        docker build \
+        --platform linux/amd64 \
+        -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app ./react
         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app
+    
+    - name: Execute Django Migrations Job
+      run: |
+        gcloud run jobs execute django-migrations-job \
+          --region ${{ sectrets.GCP_REGION }} \
+          --project ${{ secrets.GCP_PROJECT_ID }} \
+
 
     - name: Deploy Django to Cloud Run
       run: |
         gcloud run deploy django-app \
           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/django-app:latest \
+          --project ${{ secrets.GCP_PROJECT_ID }} \
           --region ${{ secrets.GCP_REGION }} \
           --platform managed \
           --allow-unauthenticated \
-          --memory 512Mi
-          --add-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}
+          --memory 512Mi \
+          --set-cloudsql-instances ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Deploy React to Cloud Run
       run: |
         gcloud run deploy react-app \
           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/react-app:latest \
+          --project ${{ secrets.GCP_PROJECT_ID }} \
           --region ${{ secrets.GCP_REGION }} \
           --platform managed \
           --allow-unauthenticated \
-          --memory 512Mi
+          --memory 1Gi
