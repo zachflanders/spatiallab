@@ -34,6 +34,7 @@ const FileUploadForm: React.FC = () => {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          withCredentials: true,
         },
       );
       console.log('File uploaded successfully:', response.data);

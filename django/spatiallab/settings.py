@@ -95,6 +95,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.User"
 
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
