@@ -55,7 +55,7 @@ jobs:
     - name: Execute Django Migrations Job
       run: |
         gcloud run jobs execute django-migrations-job \
-          --region ${{ sectrets.GCP_REGION }} \
+          --region ${{ secrets.GCP_REGION }} \
           --project ${{ secrets.GCP_PROJECT_ID }} \
 
 
