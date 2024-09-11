@@ -59,7 +59,12 @@ class FileIngestor:
                         CRS(crs), CRS("EPSG:4326"), always_xy=True
                     )
                     features = [
-                        self.transform_geom(transformer, feature["geometry"])
+                        {
+                            **feature,
+                            "geometry": self.transform_geom(
+                                transformer, feature["geometry"]
+                            ),
+                        }
                         for feature in geojson_data["features"]
                     ]
                 else:
