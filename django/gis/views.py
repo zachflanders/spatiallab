@@ -96,11 +96,11 @@ class GeoServerIngestor:
         <dataStore>
         <name>{self.store_name}</name>
         <connectionParameters>
-            <host>postgres</host>
-            <port>5432</port>
-            <database>spatiallab</database>
-            <user>postgres</user>
-            <passwd>postgres</passwd>
+            <host>{settings.DB_HOST}</host>
+            <port>{settings.DB_PORT}</port>
+            <database>{settings.DB_Name}</database>
+            <user>{settings.DB_USER}</user>
+            <passwd>{settings.DB_PASSWORD}</passwd>
             <dbtype>postgis</dbtype>
             <schema>public</schema>
         </connectionParameters>
