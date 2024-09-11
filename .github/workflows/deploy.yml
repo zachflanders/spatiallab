@@ -86,8 +86,8 @@ jobs:
 
     - name: Deploy pg_tileserv to Cloud Run
       run: |
-        gcloud run deploy pg_tileserv \
-          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/pg_tileserv:latest \
+        gcloud run deploy pg-tileserv \
+          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/pg-tileserv:latest \
           --project ${{ secrets.GCP_PROJECT_ID }} \
           --region ${{ secrets.GCP_REGION }} \
           --platform managed \
