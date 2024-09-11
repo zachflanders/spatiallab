@@ -25,3 +25,13 @@ class LayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Layer
         fields = "__all__"
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+        # You can add custom validation here if necessary
+        if not value.name.endswith((".zip", ".geojson")):
+            raise serializers.ValidationError("Unsupported file type.")
+        return value

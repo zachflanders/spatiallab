@@ -1,9 +1,9 @@
 'use client';
-import React, { useState } from 'react';
-import axios from 'axios';
-import { headers } from 'next/headers';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
+import { getCookie } from './auth';
+import api from '../api';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -13,6 +13,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [passwordConfirm, setPasswordConfirm] = useState<string>('');
+  const [csrfToken, setCsrfToken] = useState<string>('');
+
+  useEffect(() => {
+    const csrftoken = getCookie('csrftoken');
+    setCsrfToken(csrftoken || '');
+  }, [setCsrfToken]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,13 +31,12 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       formData.append('email', email);
       formData.append('password1', password);
       formData.append('password2', passwordConfirm);
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/signup/`,
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await api.post('/accounts/signup/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-CSRFToken': csrfToken || '',
         },
-      );
+      });
       onSuccess();
       // Handle successful signup
     } catch (error) {

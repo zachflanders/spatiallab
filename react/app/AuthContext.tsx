@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { checkAuth } from './accounts/auth'; // Adjust the import path as necessary
+import { checkAuth, getCookie } from './accounts/auth'; // Adjust the import path as necessary
+import { set } from 'ol/transform';
 
 interface AuthContextProps {
   isAuthenticated: boolean;
@@ -17,15 +18,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchAuthStatus = async () => {
-      const authStatus = await checkAuth();
-      setIsAuthenticated(authStatus);
-      setIsLoading(false);
-    };
+  const fetchAuthStatus = async () => {
+    const authStatus = await checkAuth();
+    setIsAuthenticated(authStatus ? true : false);
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchAuthStatus();
-  }, []);
+  }, [setIsAuthenticated, setIsLoading]);
 
   return (
     <AuthContext.Provider

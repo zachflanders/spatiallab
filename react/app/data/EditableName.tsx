@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { getCookie } from '../accounts/auth';
+import api from '../api';
 
 interface EditableNameProps {
   initialName: string;
@@ -35,21 +36,19 @@ const EditableName: React.FC<EditableNameProps> = ({
   const handleBlur = async () => {
     setIsEditing(false);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${layerId}/`,
+      const response = await api.put(
+        `/gis/layer/${layerId}/`,
+        { name },
         {
-          method: 'PUT', // or 'PUT' depending on your API
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken || '',
           },
-          body: JSON.stringify({ name }),
         },
       );
-      if (!response.ok) {
+      if (!(response.status === 200)) {
         throw new Error('Network response was not ok');
       }
-      const data = await response.json();
+      const data = await response.data;
       const updatedLayers = layers.map((layer) =>
         layer.id === layerId ? data : layer,
       );

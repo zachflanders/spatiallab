@@ -1,8 +1,10 @@
 'use client';
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
+import { getCookie } from './auth';
+import api from '../api';
+
 interface LoginFormProps {
   onLoginSuccess: () => void;
 }
@@ -10,25 +12,37 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [csrfToken, setCsrfToken] = useState<string>('');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  useEffect(() => {
+    setCsrfToken(getCookie('csrftoken') || '');
+  }, [setCsrfToken]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log('Logging in...');
     try {
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/login/`,
-        formData,
+      const response = await api.post(
+        '/token/',
         {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          email,
+          password,
+        },
+        {
+          headers: {
+            'X-CSRFToken': csrfToken || '',
+          },
         },
       );
-      if (response.data.success) {
+      if (response.status === 200) {
+        console.log('Login successful:', response.data);
+        const { access, refresh } = response.data;
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
         onLoginSuccess();
       }
     } catch (error) {
-      // Handle login error
+      console.error('Login failed:', error);
     }
   };
 

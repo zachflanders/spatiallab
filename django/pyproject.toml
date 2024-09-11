@@ -21,6 +21,7 @@ fiona = "^1.9.6"
 google-auth = "^2.34.0"
 google-auth-oauthlib = "^1.2.1"
 google-auth-httplib2 = "^0.2.0"
+djangorestframework-simplejwt = "^5.3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0" 

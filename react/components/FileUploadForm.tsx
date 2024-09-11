@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+'use client';
+import React, { useState, useEffect } from 'react';
 import Button from './Button';
-import Input from './Input';
 import { useRouter } from 'next/navigation';
+import { getCookie } from '../app/accounts/auth';
+import api from '../app/api';
 
 const FileUploadForm: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-
+  const [csrfToken, setCsrfToken] = useState<string>('');
   const router = useRouter();
+
+  useEffect(() => {
+    setCsrfToken(getCookie('csrftoken') || '');
+  }, [setCsrfToken]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -27,16 +32,13 @@ const FileUploadForm: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/upload/`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
+      console.log(csrfToken);
+      const response = await api.post('/gis/upload/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-CSRFToken': csrfToken || '',
         },
-      );
+      });
       console.log('File uploaded successfully:', response.data);
       router.push(`/data?selectedLayer=${response.data.layer_id}`);
     } catch (error) {

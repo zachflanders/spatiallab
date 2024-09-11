@@ -8,7 +8,12 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+
 
 from .forms import UserCreationForm
 from .token_generator import custom_token_generator
@@ -38,7 +43,6 @@ def send_activation_email(user, request):
     )
 
 
-@csrf_exempt
 def signup_view(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -55,7 +59,6 @@ def signup_view(request):
         return JsonResponse({"errors": form.errors}, status=400)
 
 
-@csrf_exempt
 def activate_view(request, uid, token):
     try:
         uid = force_str(urlsafe_base64_decode(uid))
@@ -70,7 +73,6 @@ def activate_view(request, uid, token):
     return JsonResponse({"error": "Invalid activation link"}, status=400)
 
 
-@csrf_exempt
 def resend_activation_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -95,7 +97,6 @@ def resend_activation_view(request):
     )
 
 
-@csrf_exempt
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -108,11 +109,32 @@ def login_view(request):
         return JsonResponse({"error": "Invalid credentials"}, status=400)
 
 
-def logout_view(request):
-    logout(request)
-    return JsonResponse({"success": True})
+class IsAuthenticatedJWTView(APIView):
+    """
+    A view to check if the user is authenticated based on the JWT token.
+    """
 
+    permission_classes = [
+        IsAuthenticated
+    ]  # This ensures the user is authenticated with JWT
 
-def is_authenticated_view(request):
-    is_authenticated = request.user.is_authenticated
-    return JsonResponse({"is_authenticated": is_authenticated})
+    def get(self, request):
+        """
+        Returns user data if the JWT token is valid.
+        """
+        user = (
+            request.user
+        )  # This will only be accessible if the user is authenticated by the JWT
+
+        return Response(
+            {
+                "is_authenticated": True,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )

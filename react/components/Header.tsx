@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
-import { checkAuth, logout } from '@/app/accounts/auth';
+import { checkAuth, logout, getCookie } from '@/app/accounts/auth';
 import { useAuth } from '../app/AuthContext'; // Adjust the import path as necessary
 
 interface HeaderProps {
@@ -15,12 +15,17 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const router = useRouter();
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
     useAuth();
+  const [csrfToken, setCsrfToken] = useState<string>('');
+
+  useEffect(() => {
+    setCsrfToken(getCookie('csrftoken') || '');
+  }, [setCsrfToken]);
 
   const handleLogout = async () => {
     setIsLoading(true);
     logout();
     const isAuth = await checkAuth();
-    setIsAuthenticated(isAuth);
+    setIsAuthenticated(isAuth ? true : false);
     setIsLoading(false);
   };
 

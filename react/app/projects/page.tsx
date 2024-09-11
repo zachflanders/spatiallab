@@ -1,8 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { getCookie } from '../accounts/auth';
-import { headers } from 'next/headers';
+import api from '../api';
 
 const AddProject: React.FC = () => {
   const [name, setName] = useState('');
@@ -14,7 +13,7 @@ const AddProject: React.FC = () => {
   useEffect(() => {
     const token = getCookie('csrftoken');
     setCsrfToken(token);
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,8 +21,8 @@ const AddProject: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/projects/`,
+      const response = await api.post(
+        '/gis/projects/',
         {
           name,
           description,
