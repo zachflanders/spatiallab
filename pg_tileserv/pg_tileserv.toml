@@ -1,0 +1,4 @@
+# Server settings
+HttpHost = "0.0.0.0"  # Cloud Run needs to bind to all available interfaces
+HttpPort = 8080        # Set this to 8080 because Cloud Run expects your container to listen on this port
+

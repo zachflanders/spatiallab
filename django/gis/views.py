@@ -34,30 +34,12 @@ from gis.permissions import IsOwner
 logger = logging.getLogger(__name__)
 
 
-class GeoServerIngestor:
+class FileUploadView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def __init__(
-        self,
-        layer_id: int,
-        geoserver_url: str = "http://geoserver:8080/geoserver",
-        workspace_name: str = "spatiallab",
-        username: str = "admin",
-        password: str = "password",
-    ) -> None:
-        self.layer_id = layer_id
-        self.geoserver_url = geoserver_url
-        self.workspace_name = workspace_name
-        self.workspace_url = f"{self.geoserver_url}/rest/workspaces"
-        self.store_name = f"layer_{self.layer_id}_store"
-        self.datastore_url = (
-            f"{self.geoserver_url}/rest/workspaces/{self.workspace_name}/datastores"
-        )
-        self.layer_name = f"layer_{self.layer_id}_features"
-        self.username = username
-        self.password = password
-
-    def create_feature_view(self) -> None:
-        view_name = f"layer_{self.layer_id}_features"
+    @staticmethod
+    def create_feature_view(layer_id) -> None:
+        view_name = f"layer_{layer_id}_features"
         with connection.cursor() as cursor:
             cursor.execute(
                 f"""
@@ -67,71 +49,8 @@ class GeoServerIngestor:
                 JOIN gis_layer l ON f.layer_id = l.id
                 WHERE f.layer_id = %s
             """,
-                [self.layer_id],
+                [layer_id],
             )
-
-    def create_workspace(self) -> None:
-        logger.info("Creating workspace")
-        logger.info(f"Workspace URL: {self.workspace_url}")
-        response = requests.get(
-            f"{self.workspace_url}/{self.workspace_name}",
-            auth=HTTPBasicAuth(self.username, self.password),
-        )
-        logger.info(f"Workspace response: {response.status_code}")
-        if response.status_code == 404:
-            workspace_data = f"""
-            <workspace>
-                <name>{self.workspace_name}</name>
-            </workspace>
-            """
-            requests.post(
-                self.workspace_url,
-                data=workspace_data,
-                headers={"Content-Type": "text/xml"},
-                auth=HTTPBasicAuth(self.username, self.password),
-            )
-
-    def create_datastore(self) -> None:
-        datastore_data = f"""
-        <dataStore>
-        <name>{self.store_name}</name>
-        <connectionParameters>
-            <host>localhost</host>
-            <port>{settings.DB_PORT}</port>
-            <database>{settings.DB_Name}</database>
-            <user>{settings.DB_USER}</user>
-            <passwd>{settings.DB_PASSWORD}</passwd>
-            <dbtype>postgis</dbtype>
-            <schema>public</schema>
-        </connectionParameters>
-        </dataStore>
-        """
-        requests.post(
-            self.datastore_url,
-            data=datastore_data,
-            headers={"Content-Type": "text/xml"},
-            auth=HTTPBasicAuth(self.username, self.password),
-        )
-
-    def create_feature_layer(self) -> None:
-        layer_url = f"{self.datastore_url}/{self.store_name}/featuretypes"
-        layer_data = f"""
-        <featureType>
-        <name>{self.layer_name}</name>
-        <nativeName>{self.layer_name}</nativeName>
-        <srs>EPSG:4326</srs>  
-        </featureType>
-        """
-        requests.post(
-            layer_url,
-            data=layer_data,
-            headers={"Content-Type": "text/xml"},
-            auth=HTTPBasicAuth(self.username, self.password),
-        )
-
-
-class FileUploadView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = FileUploadSerializer(data=request.data)
@@ -153,20 +72,7 @@ class FileUploadView(APIView):
             # Call async task to ingest file into DB
             layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
 
-            # Initialize GeoServerIngestor
-            geoserver_ingestor = GeoServerIngestor(
-                layer_id=layer_id,
-                geoserver_url=settings.GEOSERVER_URL,
-                workspace_name="spatiallab",
-                username=settings.GEOSERVER_ADMIN_USER,
-                password=settings.GEOSERVER_ADMIN_PASSWORD,
-            )
-
-            # Create GeoServer resources
-            geoserver_ingestor.create_feature_view()
-            geoserver_ingestor.create_workspace()
-            geoserver_ingestor.create_datastore()
-            geoserver_ingestor.create_feature_layer()
+            self.create_feature_view(layer_id)
 
             return Response(
                 {"layer_id": layer_id, "message": "File uploaded successfully"},
