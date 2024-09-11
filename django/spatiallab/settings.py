@@ -1,8 +1,8 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 import environ
 from google.oauth2 import service_account
-
 
 # Initialize environment variables
 env = environ.Env()
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",
     "accounts",
     "gis",
     # Add your apps here
@@ -95,14 +96,19 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.User"
 
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
-SESSION_COOKIE_SAMESITE = "None"  # Required for cross-origin requests
-SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
-SESSION_COOKIE_DOMAIN = (
-    ".spatiallab.app"  # Allows cookies to be shared across subdomains
-)
-SESSION_COOKIE_AGE = 1209600  # Optional: set cookie expiration (2 weeks)
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
+
 
 LOGGING = {
     "version": 1,
@@ -125,9 +131,6 @@ STATIC_ROOT = BASE_DIR / "static"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CORS_ALLOW_CREDENTIALS = True
-
 
 CORS_ALLOWED_ORIGINS = [
     "https://spatiallab.app",
@@ -161,4 +164,4 @@ GEOSERVER_URL = env(
     "GEOSERVER_URL", default="https://geoserver.spatiallab.app/geoserver"
 )
 GEOSERVER_ADMIN_USER = env("GEOSERVER_ADMIN_USER", default="admin")
-GEOSERVER_ADMIN_PASSWORD = env("GEOSERVER_ADMIN_PASSWORD", default="geoserver")
+GEOSERVER_ADMIN_PASSWORD = env("GEOSERVER_ADMIN_PASSWORD", default="password")

@@ -4,18 +4,22 @@ import axios from 'axios';
 import { FeatureData } from '@/components/LayerTable';
 import LayerTable from '@/components/LayerTable';
 import GeoServerMap from '@/components/GeoServerMap';
+import { getCookie } from '../../accounts/auth';
+import api from '../../api';
 
 export default function Page({ params }: { params: { id: number } }) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [data, setData] = useState<FeatureData[]>([]);
   const [extent, setExtent] = useState<[]>([]);
+  const [csrfToken, setCsrftoken] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Fetch the data from the backend
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${params.id}/`,
-      )
+    setCsrftoken(getCookie('csrftoken') || '');
+    api
+      .get(`/gis/layer/${params.id}/`, {
+        headers: { 'X-CSRFToken': csrfToken || '' },
+      })
       .then((response) => {
         const responseData = response.data;
 
@@ -24,7 +28,7 @@ export default function Page({ params }: { params: { id: number } }) {
         setData(responseData.data);
         setExtent(responseData.extent);
       });
-  }, [params.id]);
+  }, [params.id, setCsrftoken, setHeaders, setData, setExtent]);
   return (
     <div>
       <div className="m-8" style={{ minHeight: 100 }}>

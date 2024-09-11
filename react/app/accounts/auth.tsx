@@ -1,32 +1,20 @@
-export async function checkAuth() {
+import api from '../api';
+
+export const checkAuth = async () => {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/is_authenticated/`,
-    );
-    if (response.ok) {
-      const data = await response.json();
-      console.log(data);
-      return data.is_authenticated;
-    }
+    const response = await api.get('/accounts/is_authenticated/');
+    console.log('User is authenticated:', response.data);
+    return response.data;
   } catch (error) {
-    console.error('There was an error checking authentication:', error);
+    console.error('User is not authenticated:', error);
     return false;
   }
-}
+};
 
 export const logout = async () => {
   console.log('logging out');
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/accounts/logout/`,
-    );
-    if (response.ok) {
-      return true;
-    }
-  } catch (error) {
-    console.error('There was an error logging out:', error);
-    return false;
-  }
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
 };
 
 export function getCookie(name: string) {

@@ -1,14 +1,12 @@
 'use client';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import axios from 'axios';
 import GeoServerMap from '@/components/GeoServerMap';
 import LayerTable from '@/components/LayerTable';
 import EditableName from './EditableName';
 import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/20/solid';
-import { set } from 'ol/transform';
 import { getCookie } from '../accounts/auth';
-import { SearchParamsContext } from 'next/dist/shared/lib/hooks-client-context.shared-runtime';
+import api from '../api';
 
 interface Layer {
   id: number;
@@ -30,6 +28,7 @@ const Page: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalFeatures, setTotalFeatures] = useState(0);
+  const [csrfToken, setCsrfToken] = useState<string>('');
 
   const sortLayers = (layers: Layer[]): Layer[] => {
     return layers.sort((a, b) => a.name.localeCompare(b.name));
@@ -37,10 +36,10 @@ const Page: React.FC = () => {
 
   useEffect(() => {
     // Fetch the data from the backend
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layers/`,
-      )
+    const csrftoken = getCookie('csrftoken');
+    setCsrfToken(csrftoken || '');
+    api
+      .get('/gis/layers/', { headers: { 'X-CSRFToken': csrfToken || '' } })
       .then((response) => {
         const responseData = response.data;
         const sortedLayers = sortLayers(responseData.layers);
@@ -58,20 +57,18 @@ const Page: React.FC = () => {
           handleSelection(sortedLayers[0]);
         }
       });
-  }, [searchParams]);
+  }, [searchParams, setLayers, setHeaders, setData, setExtent, setCsrfToken]);
 
   const handleSelection = (layer: Layer, page = 1, pageSize = 10) => {
     setSelectedLayer(layer);
     setHeaders([]);
     setData([]);
     setExtent([]);
-    axios
-      .get(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${layer.id}/`,
-        {
-          params: { page, pageSize: pageSize },
-        },
-      )
+    api
+      .get(`/gis/layer/${layer.id}/`, {
+        headers: { 'X-CSRFToken': csrfToken || '' },
+        params: { page, pageSize: pageSize },
+      })
       .then((response) => {
         const responseData = response.data;
         setHeaders(['Feature ID', ...responseData.headers]);
@@ -84,29 +81,20 @@ const Page: React.FC = () => {
       });
   };
 
-  const csrftoken = getCookie('csrftoken');
-
   const handleDelete = () => {
     console.log('Deleting layer:', selectedLayer?.id);
-    axios
-      .delete(
-        `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layer/${selectedLayer?.id}/`,
-        {
-          headers: { 'X-CSRFToken': csrftoken },
-        },
-      )
+    api
+      .delete(`/gis/layer/${selectedLayer?.id}/`, {
+        headers: { 'X-CSRFToken': csrfToken },
+      })
       .then((response) => {
         setLayers(
           sortLayers(layers.filter((layer) => layer.id !== selectedLayer?.id)),
         );
-        axios
-          .get(
-            `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_API_URL}/gis/layers/`,
-          )
-          .then((response) => {
-            const responseData = response.data;
-            handleSelection(responseData.layers[0]);
-          });
+        api.get('/gis/layers/').then((response) => {
+          const responseData = response.data;
+          handleSelection(responseData.layers[0]);
+        });
       });
   };
 

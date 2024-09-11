@@ -7,19 +7,26 @@ import requests
 from django.conf import settings
 from django.db import connection
 from django.contrib.gis.db.models import Extent
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from google.cloud import storage
 from pyproj import Transformer
 from requests.auth import HTTPBasicAuth
 from rest_framework import generics, viewsets
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import status
 
 from gis.models import Property, Feature, Layer, Project, ProjectLayer
-from gis.serializers import LayerSerializer, ProjectSerializer, ProjectLayerSerializer
+from gis.serializers import (
+    LayerSerializer,
+    ProjectSerializer,
+    ProjectLayerSerializer,
+    FileUploadSerializer,
+)
 from gis.tasks import ingest_file_to_db_task
 from gis.permissions import IsOwner
 
@@ -123,34 +130,49 @@ class GeoServerIngestor:
         )
 
 
-@csrf_exempt
-def upload_file(request):
-    # TODO: Refactor this function into smaller functions
-    if request.method == "POST" and request.FILES["file"]:
-        logger.info("Uploading file to GCS")
-        client = storage.Client(credentials=settings.GCS_CREDENTIALS)
-        bucket = client.bucket(settings.GCS_BUCKET_NAME)
-        logger.info(f"Bucket: {bucket.name}")
-        file = request.FILES["file"]
-        file_path = Path(file.name)
-        file_extension = file_path.suffix
-        file_stem = file_path.stem
-        file_name = f"{file_stem}_{uuid.uuid4()}{file_extension}"
-        blob = bucket.blob(file_name)
-        blob.upload_from_file(file)
-        gcs_path = f"gs://{bucket.name}/{file_name}"
-        logger.info(f"File uploaded to GCS: {gcs_path}")
-        layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
-        geoserver_url = settings.GEOSERVER_URL
-        geoserver_ingestor = GeoServerIngestor(layer_id, geoserver_url)
-        geoserver_ingestor.create_feature_view()
-        geoserver_ingestor.create_workspace()
-        geoserver_ingestor.create_datastore()
-        geoserver_ingestor.create_feature_layer()
-        return JsonResponse(
-            {"layer_id": layer_id, "message": "File uploaded successfully"}
-        )
-    return JsonResponse({"error": "Invalid request"}, status=400)
+class FileUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FileUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            file = serializer.validated_data["file"]
+            logger.info("Uploading file to GCS")
+
+            # Google Cloud Storage upload
+            client = storage.Client(credentials=settings.GCS_CREDENTIALS)
+            bucket = client.bucket(settings.GCS_BUCKET_NAME)
+            file_path = Path(file.name)
+            file_name = f"{file_path.stem}_{uuid.uuid4()}{file_path.suffix}"
+            blob = bucket.blob(file_name)
+            blob.upload_from_file(file)
+
+            gcs_path = f"gs://{bucket.name}/{file_name}"
+            logger.info(f"File uploaded to GCS: {gcs_path}")
+
+            # Call async task to ingest file into DB
+            layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
+
+            # Initialize GeoServerIngestor
+            geoserver_ingestor = GeoServerIngestor(
+                layer_id=layer_id,
+                geoserver_url=settings.GEOSERVER_URL,
+                workspace_name="spatiallab",
+                username=settings.GEOSERVER_ADMIN_USER,
+                password=settings.GEOSERVER_ADMIN_PASSWORD,
+            )
+
+            # Create GeoServer resources
+            geoserver_ingestor.create_feature_view()
+            geoserver_ingestor.create_workspace()
+            geoserver_ingestor.create_datastore()
+            geoserver_ingestor.create_feature_layer()
+
+            return Response(
+                {"layer_id": layer_id, "message": "File uploaded successfully"},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LayerListView(generics.ListAPIView):
@@ -166,7 +188,6 @@ class LayerListView(generics.ListAPIView):
         return Response({"layers": serializer.data})
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LayerSerializer
     permission_classes = [IsAuthenticated]
