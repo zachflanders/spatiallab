@@ -37,7 +37,7 @@ services:
         NEXT_PUBLIC_PROTOCOL: http
         NEXT_PUBLIC_ROOT_URL: localhost
         NEXT_PUBLIC_API_URL: localhost/api
-        NEXT_PUBLIC_GEOSERVER_URL: localhost/geoserver
+        NEXT_PUBLIC_TILESERV_URL: localhost/tileserv
     container_name: react
     volumes:
       - ./react:/app
@@ -72,16 +72,14 @@ services:
       - django
       - rabbitmq
 
-  geoserver:
-    image: kartoza/geoserver:latest
-    container_name: geoserver
-    ports:
-      - "8080:8080"
-    volumes:
-      - geoserver_data:/var/geoserver/data_dir
+  pg_tileserv:
+    build: ./pg_tileserv
     environment:
-      GEOSERVER_ADMIN_USER: admin
-      GEOSERVER_ADMIN_PASSWORD: password
+      - PGHOST=postgres
+      - PGUSER=postgres
+      - PGPASSWORD=postgres
+      - PGDATABASE=spatiallab
+      - PGPORT=5432
 
   jenkins:
     image: jenkins/jenkins:lts
@@ -105,5 +103,4 @@ services:
 volumes:
   postgres_data:
   rabbitmq_data:
-  geoserver_data:
   jenkins_home:

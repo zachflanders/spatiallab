@@ -25,7 +25,7 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
       const vectorTileLayer = new VectorTileLayer({
         source: new VectorTileSource({
           format: new MVT(),
-          url: `http://localhost/geoserver/gwc/service/tms/1.0.0/spatiallab%3Alayer_${layer}_features@EPSG%3A900913@pbf/{z}/{x}/{-y}.pbf`,
+          url: `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/public.layer_${layer}_features/{z}/{x}/{y}.pbf`,
         }),
       });
 
