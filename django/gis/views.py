@@ -96,7 +96,7 @@ class GeoServerIngestor:
         <dataStore>
         <name>{self.store_name}</name>
         <connectionParameters>
-            <host>{settings.DB_HOST}</host>
+            <host>localhost</host>
             <port>{settings.DB_PORT}</port>
             <database>{settings.DB_Name}</database>
             <user>{settings.DB_USER}</user>
