@@ -1,31 +1,36 @@
 'use client';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import SignupForm from './accounts/SignupForm';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
-import FileUploadForm from '@/components/FileUploadForm';
 import Footer from '@/components/Footer';
+import { set } from 'ol/transform';
 
 export default function Home() {
-  const { isAuthenticated, setIsAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
+    useAuth();
+  const [hasToken, setHasToken] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      setHasToken(true);
+    }
+    if (!isLoading && !isAuthenticated) {
+      setHasToken(false);
+    }
+    setIsLoading(false);
+  }, [isAuthenticated]);
 
   const handleSuccess = () => {
     setIsAuthenticated(true);
     router.push('/');
   };
 
-  if (isLoading) {
-    return (
-      <main className="flex items-center justify-center min-h-screen">
-        <div className="text-2xl font-semibold text-gray-700">Loading...</div>
-      </main>
-    );
-  }
-
   return (
     <main className="bg-transparent">
-      {!isAuthenticated ? (
+      {!hasToken ? (
         <div>
           <div className="space-y-24 py-24 mb-0">
             <div

@@ -17,7 +17,6 @@ class Layer(models.Model):
 
 
 class Feature(gis_models.Model):
-    name = models.CharField(max_length=255)
     geometry = gis_models.GeometryField()
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name="features")
 

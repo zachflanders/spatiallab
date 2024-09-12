@@ -7,20 +7,16 @@ import requests
 from django.conf import settings
 from django.db import connection
 from django.contrib.gis.db.models import Extent
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse
 from google.cloud import storage
 from pyproj import Transformer
-from requests.auth import HTTPBasicAuth
 from rest_framework import generics, viewsets
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from gis.models import Property, Feature, Layer, Project, ProjectLayer
+from gis.models import Property, Feature, Project, ProjectLayer
 from gis.serializers import (
     LayerSerializer,
     ProjectSerializer,
@@ -28,7 +24,7 @@ from gis.serializers import (
     FileUploadSerializer,
 )
 from gis.tasks import ingest_file_to_db_task
-from gis.permissions import IsOwner
+from gis.permissions import IsOwner, IsProjectOwner
 
 
 logger = logging.getLogger(__name__)
@@ -207,7 +203,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 class ProjectLayerViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectLayerSerializer
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [IsAuthenticated, IsProjectOwner]
 
     def get_queryset(self):
         return ProjectLayer.objects.filter(project__owner=self.request.user)

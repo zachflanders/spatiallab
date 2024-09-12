@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Button from '@/components/Button';
 import { checkAuth, logout, getCookie } from '@/app/accounts/auth';
 import { useAuth } from '../app/AuthContext'; // Adjust the import path as necessary
+import Image from 'next/image';
 
 interface HeaderProps {
   className?: string;
@@ -30,13 +31,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   };
 
   return (
-    <header className={`${className} p-4 shadow-md`}>
+    <header className={`${className} p-4 border`}>
       <div
-        className="container mx-auto flex justify-between items-center"
+        className="flex justify-between items-center"
         style={{ minHeight: 40 }}
       >
-        <Link href="/">
-          <span className="text-2xl font-bold">SpatialLab</span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/spatiallab-logo.png"
+            alt="SpatialLab"
+            width={40}
+            height={40}
+          />
+          <span className="text-2xl font-bold">Spatial Lab</span>
         </Link>
         {isLoading ? (
           <span></span>

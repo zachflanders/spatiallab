@@ -155,7 +155,7 @@ const Page: React.FC = () => {
                 </div>
                 <GeoServerMap
                   layer={selectedLayer.id}
-                  extent={extent.length === 0 ? [0, 0, 0, 0] : extent}
+                  extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
                 />
                 <LayerTable headers={headers} data={data} />
               </div>

@@ -1,14 +1,13 @@
 .template-container {
-    position: relative;
-  }
-  
-  .header {
-    position: relative;
-    z-index: 10; /* Ensure the header is above the children */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Example drop shadow */
-  }
-  
-  .content {
-    position: relative;
-    z-index: 1; /* Ensure the content is below the header */
-  }
+  position: relative;
+}
+
+.header {
+  position: relative;
+  z-index: 10; /* Ensure the header is above the children */
+}
+
+.content {
+  position: relative;
+  z-index: 1; /* Ensure the content is below the header */
+}
