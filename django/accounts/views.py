@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
-
+from .serializers import WaitlistSerializer
 from .forms import UserCreationForm
 from .token_generator import custom_token_generator
 
@@ -138,3 +138,18 @@ class IsAuthenticatedJWTView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class WaitlistCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = WaitlistSerializer(data=request.data)
+        if serializer.is_valid():
+            waitlist_entry = serializer.save()
+            subject = "Spatial Lab waitlist confirmation"
+            message = f"Hi {waitlist_entry.email},\n\nThank you for joining the Spatial Lab waitlist.  I really appreciate your support. Together, we'll put Spatial Lab on the map!\n\nBest regards,\nZach"
+            from_email = "zachflanders@gmail.com"  # Replace with your email
+            recipient_list = [waitlist_entry.email]
+
+            send_mail(subject, message, from_email, recipient_list)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
