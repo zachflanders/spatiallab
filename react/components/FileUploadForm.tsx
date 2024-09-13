@@ -8,12 +8,7 @@ import api from '../app/api';
 const FileUploadForm: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [csrfToken, setCsrfToken] = useState<string>('');
   const router = useRouter();
-
-  useEffect(() => {
-    setCsrfToken(getCookie('csrftoken') || '');
-  }, [setCsrfToken]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -32,14 +27,11 @@ const FileUploadForm: React.FC = () => {
     formData.append('file', file);
 
     try {
-      console.log(csrfToken);
       const response = await api.post('/gis/upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'X-CSRFToken': csrfToken || '',
         },
       });
-      console.log('File uploaded successfully:', response.data);
       router.push(`/data?selectedLayer=${response.data.layer_id}`);
     } catch (error) {
       console.error('Error uploading file:', error);

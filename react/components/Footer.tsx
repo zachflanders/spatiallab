@@ -12,6 +12,7 @@ const Footer: React.FC = () => {
               We provide powerful geospatial solutions that help you manage,
               analyze, and share your data with ease.
             </p>
+            <p className="mt-4 text-gray-400">Made with ❤️ in Kansas City.</p>
           </div>
 
           {/* Column 2 */}
@@ -87,7 +88,7 @@ const Footer: React.FC = () => {
 
         <div className="mt-12 text-center text-gray-500">
           <p>
-            &copy; {new Date().getFullYear()} SpatialLab. All rights reserved.
+            &copy; {new Date().getFullYear()} Spatial Lab. All rights reserved.
           </p>
         </div>
       </div>

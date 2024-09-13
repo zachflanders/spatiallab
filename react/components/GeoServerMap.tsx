@@ -57,7 +57,6 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
 
   useEffect(() => {
     if (mapInstance.current && extent) {
-      console.log(`extent: ${extent}`);
       mapInstance.current
         .getView()
         .fit(extent, { size: mapInstance.current.getSize() });

@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { getCookie } from '../accounts/auth';
+import Link from 'next/link';
 import api from '../api';
 
 const AddProject: React.FC = () => {
@@ -8,11 +8,12 @@ const AddProject: React.FC = () => {
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState<string | null>(null);
+  const [projects, setProjects] = useState<any[]>([]);
 
   useEffect(() => {
-    const token = getCookie('csrftoken');
-    setCsrfToken(token);
+    api.get('/gis/projects/').then((response) => {
+      setProjects(response.data);
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,19 +22,10 @@ const AddProject: React.FC = () => {
     setSuccess(null);
 
     try {
-      const response = await api.post(
-        '/gis/projects/',
-        {
-          name,
-          description,
-        },
-        {
-          headers: {
-            'X-CSRFToken': csrfToken,
-          },
-          withCredentials: true,
-        },
-      );
+      const response = await api.post('/gis/projects/', {
+        name,
+        description,
+      });
       setSuccess('Project added successfully!');
       setName('');
       setDescription('');
@@ -88,6 +80,21 @@ const AddProject: React.FC = () => {
           </button>
         </div>
       </form>
+      {projects.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Projects</h2>
+          <ul>
+            {projects.map((project) => (
+              <li key={project.id} className="mb-2">
+                <Link className="font-bold" href={`/project/${project.id}`}>
+                  {project.name}
+                </Link>
+                <p>{project.description}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

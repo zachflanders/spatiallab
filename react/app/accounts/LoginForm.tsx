@@ -20,7 +20,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('Logging in...');
     try {
       const response = await api.post(
         '/token/',
@@ -35,7 +34,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
         },
       );
       if (response.status === 200) {
-        console.log('Login successful:', response.data);
         const { access, refresh } = response.data;
         localStorage.setItem('access_token', access);
         localStorage.setItem('refresh_token', refresh);

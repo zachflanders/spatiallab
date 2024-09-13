@@ -1,4 +1,5 @@
 import json
+import logging
 import tempfile
 import zipfile
 from pathlib import Path
@@ -11,6 +12,8 @@ from pyproj import CRS, Transformer
 
 from gis.models import Layer, Feature, Property
 from accounts.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class FileIngestor:
@@ -109,7 +112,6 @@ class FileIngestor:
         # Create Feature instances
         feature_instances = [
             Feature(
-                name=feature["properties"].get("name", "Unnamed Feature"),
                 geometry=GEOSGeometry(json.dumps(feature["geometry"])),
                 layer=layer,
             )
