@@ -54,10 +54,7 @@ const EditableName: React.FC<EditableNameProps> = ({
       );
       const sortedLayers = sortLayers(updatedLayers);
       setLayers(sortedLayers);
-      console.log('Success:', data);
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    } catch (error) {}
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

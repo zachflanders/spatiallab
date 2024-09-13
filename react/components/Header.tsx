@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   };
 
   return (
-    <header className={`${className} p-4 border`}>
+    <header className={`${className} p-4 border-b`} style={{ zIndex: 2 }}>
       <div
         className="flex justify-between items-center"
         style={{ minHeight: 40 }}

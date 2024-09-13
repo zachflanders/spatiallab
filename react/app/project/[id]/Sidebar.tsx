@@ -3,15 +3,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid';
 import { Layer, ProjectLayer } from './types';
 import api from '../../api';
+import { set } from 'ol/transform';
 
 interface SidebarProps {
   projectLayers: ProjectLayer[];
   setProjectLayers: React.Dispatch<React.SetStateAction<ProjectLayer[]>>;
+  setActiveModal: React.Dispatch<React.SetStateAction<'add' | 'style' | null>>;
+  setSelectedStylingLayer: React.Dispatch<
+    React.SetStateAction<ProjectLayer | null>
+  >;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   projectLayers,
   setProjectLayers,
+  setActiveModal,
+  setSelectedStylingLayer,
 }) => {
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
@@ -38,15 +45,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleStyleLayer = () => {
-    console.log('Style Layer');
+    setActiveModal('style');
+    setSelectedStylingLayer(activeLayer);
     closeContextMenu();
   };
 
   const handleRemoveLayer = () => {
-    console.log('Remove Layer');
     if (!activeLayer) return;
     api.delete(`/gis/project-layers/${activeLayer.id}/`).then((response) => {
-      console.log('Layer removed:', response.data);
       setProjectLayers((prevProjectLayers) =>
         prevProjectLayers.filter((layer) => layer.id !== activeLayer.id),
       );

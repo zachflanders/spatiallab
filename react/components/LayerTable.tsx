@@ -13,7 +13,7 @@ export interface TableProps {
 const LayerTable: React.FC<TableProps> = ({ headers, data }) => {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border border-gray-300">
+      <table className="min-w-full bg-white border-t">
         <thead>
           <tr>
             {headers.map((header) => (

@@ -10,4 +10,5 @@ export interface ProjectLayer {
   name: string;
   layer: Layer;
   extent?: number[];
+  style: any;
 }

@@ -3,16 +3,13 @@ import api from '../api';
 export const checkAuth = async () => {
   try {
     const response = await api.get('/accounts/is_authenticated/');
-    console.log('User is authenticated:', response.data);
     return response.data;
   } catch (error) {
-    console.error('User is not authenticated:', error);
     return false;
   }
 };
 
 export const logout = async () => {
-  console.log('logging out');
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
 };

@@ -82,7 +82,6 @@ const Page: React.FC = () => {
   };
 
   const handleDelete = () => {
-    console.log('Deleting layer:', selectedLayer?.id);
     api
       .delete(`/gis/layer/${selectedLayer?.id}/`, {
         headers: { 'X-CSRFToken': csrfToken },

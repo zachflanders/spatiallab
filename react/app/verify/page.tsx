@@ -51,7 +51,6 @@ const Verify = () => {
           headers: { 'Content-Type': 'multipart/form-data' },
         },
       );
-      console.log(response);
 
       if (response.data.success) {
         setEmailResent(true);

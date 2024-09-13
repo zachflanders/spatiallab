@@ -4,7 +4,7 @@ import SignupForm from './accounts/SignupForm';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
 import Footer from '@/components/Footer';
-import { set } from 'ol/transform';
+import Input from '@/components/Input';
 
 export default function Home() {
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
@@ -17,11 +17,11 @@ export default function Home() {
     if (token) {
       setHasToken(true);
     }
-    if (!isLoading && !isAuthenticated) {
-      setHasToken(false);
-    }
+    // if (!isLoading && !isAuthenticated) {
+    //   setHasToken(false);
+    // }
     setIsLoading(false);
-  }, [isAuthenticated]);
+  }, []);
 
   const handleSuccess = () => {
     setIsAuthenticated(true);
@@ -32,23 +32,33 @@ export default function Home() {
     <main className="bg-transparent">
       {!hasToken ? (
         <div>
-          <div className="space-y-24 py-24 mb-0">
+          <div className="space-y-24 py-24 mb-0 p-4">
             <div
               className="text-center"
               style={{ marginTop: 130, marginBottom: 150 }}
             >
-              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 pb-6">
+              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500 pb-16">
                 GIS you&apos;ll{' '}
                 <u
                   className="underline decoration-4 decoration-blue-300"
                   style={{
                     textUnderlineOffset: '0.3rem',
+                    textDecorationThickness: '0.15rem',
                   }}
                 >
                   love
                 </u>
                 !
               </h1>
+              <div className="text-lg text-gray-600 max-w-lg mx-auto text-left">
+                <h2>Join the Waitlist:</h2>
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  onChange={() => console.log('add email')}
+                  value=""
+                />
+              </div>
             </div>
 
             <div className="max-w-7xl mx-auto">
@@ -65,10 +75,11 @@ export default function Home() {
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="flex flex-col justify-center">
                 <h2 className="text-4xl font-semibold text-gray-800">
-                  Your data in the cloud.
+                  Collaborate with your team.
                 </h2>
                 <p className="mt-4 text-lg text-gray-600">
-                  Store, manage, and share your geospatial data effortlessly.
+                  With your data in the cloud you can store, manage, and share
+                  your geospatial data effortlessly accross your entire team.
                 </p>
               </div>
               <div className="flex justify-center">
@@ -94,10 +105,11 @@ export default function Home() {
               </div>
               <div className="flex flex-col justify-center order-1 md:order-2">
                 <h2 className="text-4xl font-semibold text-gray-800 text-right">
-                  Analyze geospatial data.
+                  The tools you need.
                 </h2>
                 <p className="mt-4 text-lg text-gray-600 text-right">
-                  Unlock insights with powerful analysis tools.
+                  Analyze your data and unlock insights with powerful analysis
+                  tools.
                 </p>
               </div>
             </div>
@@ -105,10 +117,11 @@ export default function Home() {
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="flex flex-col justify-center">
                 <h2 className="text-4xl font-semibold text-gray-800">
-                  Publish and Share Maps.
+                  Share with your community.
                 </h2>
                 <p className="mt-4 text-lg text-gray-600">
-                  Create beautiful maps and share them with the world.
+                  Create beautiful maps and share them with the world with our
+                  easy publishing tools.
                 </p>
               </div>
               <div className="flex justify-center">
@@ -119,12 +132,6 @@ export default function Home() {
                   height={400}
                   width={600}
                 />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <div className="w-full max-w-md">
-                <SignupForm onSuccess={handleSuccess} />
               </div>
             </div>
           </div>
