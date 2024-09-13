@@ -5,6 +5,7 @@ from .views import (
     login_view,
     IsAuthenticatedJWTView,
     resend_activation_view,
+    WaitlistCreateView,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     ),
     path("activate/<uid>/<token>/", activate_view, name="activate"),
     path("resend_activation/", resend_activation_view, name="resend_activation"),
+    path("waitlist/", WaitlistCreateView.as_view(), name="waitlist"),
 ]

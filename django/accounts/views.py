@@ -1,3 +1,6 @@
+import json
+import logging
+from django.conf import settings
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.tokens import default_token_generator
@@ -14,9 +17,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
-
+from .serializers import WaitlistSerializer
 from .forms import UserCreationForm
 from .token_generator import custom_token_generator
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -45,7 +50,24 @@ def send_activation_email(user, request):
 
 def signup_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        logger.info("Data: %s", data)
+
+        if data.get("code") != settings.EARLY_ACCESS_CODE:
+            return JsonResponse({"error": "Invalid code"}, status=400)
+        logger.info("Code is valid")
+
+        form = UserCreationForm(
+            {
+                "email": data.get("email"),
+                "password1": data.get("password1"),
+                "password2": data.get("password2"),
+            }
+        )
+
         if form.is_valid():
             user = form.save()
             send_activation_email(user, request)
@@ -138,3 +160,18 @@ class IsAuthenticatedJWTView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class WaitlistCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = WaitlistSerializer(data=request.data)
+        if serializer.is_valid():
+            waitlist_entry = serializer.save()
+            subject = "Spatial Lab waitlist confirmation"
+            message = f"Hi {waitlist_entry.email},\n\nThank you for joining the Spatial Lab waitlist.  I really appreciate your support. Together, we'll put Spatial Lab on the map!\n\nBest regards,\nZach"
+            from_email = "zachflanders@gmail.com"  # Replace with your email
+            recipient_list = [waitlist_entry.email]
+
+            send_mail(subject, message, from_email, recipient_list)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

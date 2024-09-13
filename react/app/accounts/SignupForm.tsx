@@ -13,30 +13,31 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [passwordConfirm, setPasswordConfirm] = useState<string>('');
-  const [csrfToken, setCsrfToken] = useState<string>('');
-
-  useEffect(() => {
-    const csrftoken = getCookie('csrftoken');
-    setCsrfToken(csrftoken || '');
-  }, [setCsrfToken]);
+  const [code, setCode] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const csrfToken = getCookie('csrftoken');
     e.preventDefault();
     if (password !== passwordConfirm) {
       console.error('Passwords do not match');
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password1', password);
-      formData.append('password2', passwordConfirm);
-      const response = await api.post('/accounts/signup/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'X-CSRFToken': csrfToken || '',
+      const response = await api.post(
+        '/accounts/signup/',
+        {
+          email: email,
+          password1: password,
+          password2: passwordConfirm,
+          // code: code,
         },
-      });
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken || '',
+          },
+        },
+      );
       onSuccess();
       // Handle successful signup
     } catch (error) {
@@ -76,6 +77,17 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
           type="password"
           value={passwordConfirm}
           onChange={(e) => setPasswordConfirm(e.target.value)}
+          required
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 font-bold mb-2">
+          Early Access Code:
+        </label>
+        <Input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
           required
         />
       </div>
