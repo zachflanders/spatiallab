@@ -13,6 +13,7 @@ import {
   GlobeAmericasIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/24/outline';
+import { set } from 'ol/transform';
 
 export default function Home() {
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
@@ -22,7 +23,9 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
   const [subscribe, setSubscribe] = useState(true);
-  const [signupSuccess, setSignupSuccess] = useState(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupError, setSignupError] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -67,6 +70,8 @@ export default function Home() {
       alert('Please fill in all required fields.');
       return;
     }
+    setEmailSending(true);
+    setShowForm(false);
     if (!role) {
       setRole('other');
     }
@@ -86,6 +91,11 @@ export default function Home() {
           },
         },
       );
+      if (response.status === 201) {
+        setSignupSuccess(true);
+      } else {
+        setSignupError(true);
+      }
     } catch (error) {}
   };
 
@@ -184,6 +194,27 @@ export default function Home() {
                       </div>
                     </form>
                   </div>
+                )}
+                {emailSending && !signupSuccess && !signupError && (
+                  <p className="text-gray-600 mt-4">
+                    Adding you to the waitlist...
+                  </p>
+                )}
+                {signupSuccess && (
+                  <div>
+                    <p className="text-green-600 mt-4">
+                      Thank you for joining the waitlist!
+                    </p>
+                    <p className="text-gray-600 mt-4">
+                      I sent you an email from zachflanders@gmail.com. We will
+                      notify you when Spatial Lab is available.
+                    </p>
+                  </div>
+                )}
+                {signupError && (
+                  <p className="text-red-600 mt-4">
+                    There was an error joining the waitlist. Please try again.
+                  </p>
                 )}
               </div>
             </div>
