@@ -1,3 +1,6 @@
+import json
+import logging
+from django.conf import settings
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.tokens import default_token_generator
@@ -17,6 +20,8 @@ from rest_framework import status
 from .serializers import WaitlistSerializer
 from .forms import UserCreationForm
 from .token_generator import custom_token_generator
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -45,7 +50,24 @@ def send_activation_email(user, request):
 
 def signup_view(request):
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+        logger.info("Data: %s", data)
+
+        if data.get("code") != settings.EARLY_ACCESS_CODE:
+            return JsonResponse({"error": "Invalid code"}, status=400)
+        logger.info("Code is valid")
+
+        form = UserCreationForm(
+            {
+                "email": data.get("email"),
+                "password1": data.get("password1"),
+                "password2": data.get("password2"),
+            }
+        )
+
         if form.is_valid():
             user = form.save()
             send_activation_email(user, request)

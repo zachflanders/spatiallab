@@ -29,7 +29,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
           email: email,
           password1: password,
           password2: passwordConfirm,
-          code: code,
+          // code: code,
         },
         {
           headers: {
