@@ -4,12 +4,36 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 
 
+class Directory(models.Model):
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="subdirectories",
+        null=True,
+        blank=True,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="directories"
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Layer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="layers"
+    )
+    directory = models.ForeignKey(
+        Directory,
+        on_delete=models.CASCADE,
+        related_name="layers",
+        null=True,
+        blank=True,
     )
 
     def __str__(self):
@@ -47,6 +71,45 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProjectLayerGroup(models.Model):
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        related_name="subgroups",
+        null=True,
+        blank=True,
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="layer_groups"
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class ProjectLayer(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="project_layers"
+    )
+    layer = models.ForeignKey(
+        Layer, on_delete=models.CASCADE, related_name="project_layers"
+    )
+    group = models.ForeignKey(
+        ProjectLayerGroup,
+        on_delete=models.CASCADE,
+        related_name="project_layers",
+        null=True,
+        blank=True,
+    )
+    style = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Project: {self.project.name}, Layer: {self.layer.name}"
 
 
 class ProjectLayer(models.Model):
