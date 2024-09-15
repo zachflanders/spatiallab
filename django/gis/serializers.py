@@ -48,6 +48,7 @@ class DirectorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Directory
         fields = ["id", "name", "parent", "user"]
+        read_only_fields = ["user"]
 
     def create(self, validated_data):
         request = self.context.get("request")

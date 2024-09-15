@@ -75,7 +75,7 @@ const EditableName: React.FC<EditableNameProps> = ({
   }, [isEditing]);
 
   return (
-    <div className="flex items-center p-1">
+    <div className="flex items-center">
       {isEditing ? (
         <input
           type="text"

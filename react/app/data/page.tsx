@@ -70,7 +70,8 @@ const Page: React.FC = () => {
           };
           console.log(homeDir);
           console.log(homeLayers);
-          setDirectories([homeDir, ...directories]);
+          setDirectories([homeDir, ...response.data]);
+          console.log(directories);
         });
 
         const selectedLayerParam = searchParams.get('selectedLayer');
@@ -128,15 +129,9 @@ const Page: React.FC = () => {
   const handleExport = () => {};
 
   const addDirectory = (name: string, parent: number | null) => {
-    api
-      .post(
-        '/gis/directories/',
-        { name, parent },
-        { headers: { 'X-CSRFToken': csrfToken || '' } },
-      )
-      .then((response) => {
-        setDirectories([...directories, response.data]);
-      });
+    api.post('/gis/directories/', { name, parent }).then((response) => {
+      setDirectories([...directories, response.data]);
+    });
   };
 
   const deleteDirectory = (id: number) => {
@@ -171,7 +166,7 @@ const Page: React.FC = () => {
         {/* Content */}
         <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 72 }}>
           {/* Left Pane */}
-          <div className="w-1/4 p-2 bg-white overflow-auto border-r">
+          <div className="w-1/4 bg-white overflow-auto border-r h-full">
             <FolderPane
               layers={layers}
               directories={directories}
@@ -188,7 +183,10 @@ const Page: React.FC = () => {
           <div className="flex-1 bg-white overflow-auto">
             {selectedLayer && (
               <div>
-                <div className="flex justify-between items-center p-1 pr-2 border-b">
+                <div
+                  className="flex justify-between items-center p-2 pr-4 border-b"
+                  style={{ height: '59px' }}
+                >
                   <EditableName
                     key={selectedLayer.id}
                     initialName={selectedLayer.name}

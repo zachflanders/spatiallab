@@ -217,3 +217,6 @@ class DirectoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Directory.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
