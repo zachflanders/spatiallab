@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Layer, Project, ProjectLayer
+from .models import Layer, Project, ProjectLayer, Directory
 
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -42,3 +42,14 @@ class FileUploadSerializer(serializers.Serializer):
         if not value.name.endswith((".zip", ".geojson")):
             raise serializers.ValidationError("Unsupported file type.")
         return value
+
+
+class DirectorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Directory
+        fields = ["id", "name", "parent", "user"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        validated_data["user"] = request.user
+        return super().create(validated_data)

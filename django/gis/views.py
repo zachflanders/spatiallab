@@ -16,12 +16,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from gis.models import Property, Feature, Project, ProjectLayer
+from gis.models import Property, Feature, Project, ProjectLayer, Directory
 from gis.serializers import (
     LayerSerializer,
     ProjectSerializer,
     ProjectLayerSerializer,
     FileUploadSerializer,
+    DirectorySerializer,
 )
 from gis.tasks import ingest_file_to_db_task
 from gis.permissions import IsOwner, IsProjectOwner
@@ -207,3 +208,12 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ProjectLayer.objects.filter(project__owner=self.request.user)
+
+
+class DirectoryViewSet(viewsets.ModelViewSet):
+    queryset = Directory.objects.all()
+    serializer_class = DirectorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Directory.objects.filter(user=self.request.user)

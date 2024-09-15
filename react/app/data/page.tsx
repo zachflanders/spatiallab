@@ -7,15 +7,28 @@ import EditableName from './EditableName';
 import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/20/solid';
 import { getCookie } from '../accounts/auth';
 import api from '../api';
+import FolderPane from './FolderPane';
+import { set } from 'ol/transform';
+import { dir } from 'console';
 
 interface Layer {
   id: number;
   name: string;
   extent?: number[];
+  directory?: number;
+}
+
+interface Directory {
+  id: number;
+  name: string;
+  layers: Layer[];
+  subdirectories: Directory[];
+  parent?: number;
 }
 
 const Page: React.FC = () => {
   const searchParams = useSearchParams();
+  const [directories, setDirectories] = useState<Directory[]>([]);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<Layer | null>(null);
   const [selectedLayerData, setSelectedLayerData] = useState({});
@@ -44,6 +57,21 @@ const Page: React.FC = () => {
         const responseData = response.data;
         const sortedLayers = sortLayers(responseData.layers);
         setLayers(sortedLayers);
+        console.log(sortedLayers);
+
+        api.get('/gis/directories/').then((response) => {
+          setDirectories(response.data);
+          const homeLayers = sortedLayers.filter((layer) => !layer.directory);
+          const homeDir: Directory = {
+            id: 1,
+            name: 'Home',
+            layers: homeLayers,
+            subdirectories: directories,
+          };
+          console.log(homeDir);
+          console.log(homeLayers);
+          setDirectories([homeDir, ...directories]);
+        });
 
         const selectedLayerParam = searchParams.get('selectedLayer');
         if (selectedLayerParam) {
@@ -99,6 +127,44 @@ const Page: React.FC = () => {
 
   const handleExport = () => {};
 
+  const addDirectory = (name: string, parent: number | null) => {
+    api
+      .post(
+        '/gis/directories/',
+        { name, parent },
+        { headers: { 'X-CSRFToken': csrfToken || '' } },
+      )
+      .then((response) => {
+        setDirectories([...directories, response.data]);
+      });
+  };
+
+  const deleteDirectory = (id: number) => {
+    api
+      .delete(`/gis/directories/${id}/`, {
+        headers: { 'X-CSRFToken': csrfToken || '' },
+      })
+      .then(() => {
+        setDirectories(directories.filter((dir) => dir.id !== id));
+      });
+  };
+
+  const updateDirectory = (id: number, name: string, parent: number | null) => {
+    api
+      .put(
+        `/gis/directories/${id}/`,
+        { name, parent },
+        { headers: { 'X-CSRFToken': csrfToken || '' } },
+      )
+      .then((response) => {
+        setDirectories(
+          directories.map((dir) =>
+            dir.id === id ? { ...dir, name, parent } : dir,
+          ),
+        );
+      });
+  };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-screen" style={{ marginTop: -72 }}>
@@ -106,22 +172,16 @@ const Page: React.FC = () => {
         <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 72 }}>
           {/* Left Pane */}
           <div className="w-1/4 p-2 bg-white overflow-auto border-r">
-            <ul>
-              {layers.map((layer) => (
-                <li
-                  key={layer.id}
-                  className={`p-2 cursor-pointer rounded-lg hover:bg-gray-800 hover:bg-opacity-5 ${selectedLayer && selectedLayer.id === layer.id ? 'bg-gray-800 bg-opacity-10' : 'bg-white'}`}
-                  onClick={() => handleSelection(layer)}
-                  style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {layer.name}
-                </li>
-              ))}
-            </ul>
+            <FolderPane
+              layers={layers}
+              directories={directories}
+              setDirectories={setDirectories}
+              selectedLayer={selectedLayer}
+              handleSelection={handleSelection}
+              addDirectory={addDirectory}
+              deleteDirectory={deleteDirectory}
+              updateDirectory={updateDirectory}
+            />
           </div>
 
           {/* Right Pane */}
