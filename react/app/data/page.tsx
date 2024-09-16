@@ -11,6 +11,7 @@ import { FolderMoveIcon } from './FolderMoveIcon';
 import { GripVerticalIcon } from './GripVerticalIcon';
 import { Directory, Layer } from './types';
 import MoveFolderModal from './MoveFolderModal';
+import { set } from 'ol/transform';
 
 const Page: React.FC = () => {
   const searchParams = useSearchParams();
@@ -226,6 +227,8 @@ const Page: React.FC = () => {
     setIsResizing(false);
   };
   const handleMoveLayer = (newParentId: number | null) => {
+    const previousParentId = selectedLayer?.directory;
+
     api
       .put(`/gis/layer/${selectedLayer?.id}/`, { directory: newParentId })
       .then((response) => {
@@ -234,7 +237,7 @@ const Page: React.FC = () => {
         const updateDirectories = (
           dirs: Directory[],
           layer: Layer,
-          parentId: number,
+          parentId: number | null,
           remove = false,
         ): Directory[] => {
           return dirs.map((dir) => {
@@ -242,8 +245,8 @@ const Page: React.FC = () => {
               return {
                 ...dir,
                 layers: remove
-                  ? dir.layers.filter((l) => l.id !== layer.id)
-                  : [...(dir.layers || []), layer],
+                  ? sortLayers(dir.layers.filter((l) => l.id !== layer.id))
+                  : sortLayers([...(dir.layers || []), layer]),
               };
             }
 
@@ -265,25 +268,40 @@ const Page: React.FC = () => {
 
         setDirectories((prevDirectories) => {
           // Remove the layer from its old location
-          if (selectedLayer && newParentId) {
-            const directoriesWithoutLayer = updateDirectories(
-              prevDirectories,
-              selectedLayer,
-              selectedLayer.directory,
-              true,
-            );
-            return updateDirectories(
-              directoriesWithoutLayer,
-              movedLayer,
-              newParentId,
-            );
-          }
-          return prevDirectories; // Ensure a Directory[] is always returned
+          const directoriesWithoutLayer =
+            previousParentId !== null
+              ? updateDirectories(
+                  prevDirectories,
+                  selectedLayer,
+                  previousParentId,
+                  true,
+                )
+              : prevDirectories;
+
+          // Add the layer to its new location
+          return newParentId !== null
+            ? updateDirectories(
+                directoriesWithoutLayer,
+                movedLayer,
+                newParentId,
+              )
+            : directoriesWithoutLayer;
         });
 
-        setHomeLayers((prevHomeLayers) =>
-          prevHomeLayers.filter((layer) => layer.id !== selectedLayer?.id),
-        );
+        setHomeLayers((prevHomeLayers) => {
+          // Remove the layer from homeLayers if it was there
+          const updatedHomeLayers = prevHomeLayers.filter(
+            (layer) => layer.id !== selectedLayer?.id,
+          );
+
+          // If the new parent is null, add the layer to homeLayers
+          if (newParentId === null) {
+            updatedHomeLayers.push(movedLayer);
+          }
+
+          return sortLayers(updatedHomeLayers);
+        });
+        setSelectedLayer(movedLayer);
       });
 
     console.log('Move layer to:', newParentId);

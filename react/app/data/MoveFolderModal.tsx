@@ -7,7 +7,7 @@ interface MoveFolderModalProps {
   homeLayers: Layer[];
   directories: Directory[];
   onClose: () => void;
-  onMove: (folder: number) => void;
+  onMove: (folder: number | null) => void;
 }
 
 const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
@@ -21,6 +21,7 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
   const [collapsedFolders, setCollapsedFolders] = useState<
     Record<string, boolean>
   >({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize all folders as collapsed
@@ -40,16 +41,25 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
     setCollapsedFolders(initializeCollapsedState(directories));
   }, [directories]);
 
-  const handleSelectFolder = (folder: number) => {
+  const handleSelectFolder = (folder: number | null) => {
     console.log(`Selected folder: ${folder}`);
     setSelectedFolder(folder);
   };
 
   const handleMove = () => {
-    if (selectedFolder) {
-      console.log(`Moving to ${selectedFolder}`);
+    if (
+      selectedFolder &&
+      !isInvalidMove(current, selectedFolder, directories)
+    ) {
       onMove(selectedFolder);
       onClose();
+    } else if (selectedFolder === null) {
+      onMove(null);
+      onClose();
+    } else {
+      setErrorMessage(
+        'Invalid move: A folder cannot be moved into itself or its descendants.',
+      );
     }
   };
 
@@ -58,6 +68,37 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
       ...prev,
       [folderId]: !prev[folderId],
     }));
+  };
+
+  const isInvalidMove = (
+    current: Layer | Directory,
+    targetId: number,
+    directories: Directory[],
+  ): boolean => {
+    console.log(current, targetId, directories);
+    if (current.id === targetId) {
+      return true;
+    }
+
+    const checkDescendants = (dirs: Directory[]): boolean => {
+      for (const dir of dirs) {
+        if (dir.id === targetId) {
+          return true;
+        }
+        if (dir.subdirectories && dir.subdirectories.length > 0) {
+          if (checkDescendants(dir.subdirectories)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    if ('subdirectories' in current && current.subdirectories) {
+      return checkDescendants(current.subdirectories);
+    }
+
+    return false;
   };
 
   const renderDirectoryTree = (dirs: Directory[]) => {
@@ -100,8 +141,22 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
         <hr />
         <h2 className="text-lg my-4">Select New Folder</h2>
         <div className="overflow-auto h-64 border rounded shadow-inner">
-          {renderDirectoryTree(directories)}
+          <div className="ml-4">
+            <div
+              className={`p-2 cursor-pointer flex items-center ${selectedFolder === null ? 'bg-gray-200' : ''}`}
+              onClick={() => handleSelectFolder(null)}
+            >
+              <span className="mr-2 cursor-pointer">
+                <MinusIcon className="h-4 w-4" />
+              </span>
+              Home
+            </div>
+            <div className="ml-4">{renderDirectoryTree(directories)}</div>
+          </div>
         </div>
+        {errorMessage && (
+          <div className="text-red-500 mt-2">{errorMessage}</div>
+        )}
         <div className="flex justify-end mt-4">
           <button className="mr-2 p-2 bg-gray-300 rounded" onClick={onClose}>
             Cancel
