@@ -216,6 +216,8 @@ const FolderPane: React.FC<FolderPaneProps> = ({
       )}
       {showMoveModal && (
         <MoveFolderModal
+          current={directoryToMove}
+          homeLayers={homeLayers}
           directories={directories}
           onClose={() => setShowMoveModal(false)}
           onMove={doMoveDirectory}

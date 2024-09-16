@@ -9,21 +9,8 @@ import api from '../api';
 import FolderPane from './FolderPane';
 import { FolderMoveIcon } from './FolderMoveIcon';
 import { GripVerticalIcon } from './GripVerticalIcon';
-
-interface Layer {
-  id: number;
-  name: string;
-  extent?: number[];
-  directory?: number;
-}
-
-interface Directory {
-  id: number;
-  name: string;
-  layers: Layer[];
-  subdirectories: Directory[];
-  parent?: number;
-}
+import { Directory, Layer } from './types';
+import MoveFolderModal from './MoveFolderModal';
 
 const Page: React.FC = () => {
   const searchParams = useSearchParams();
@@ -42,6 +29,7 @@ const Page: React.FC = () => {
   const [totalFeatures, setTotalFeatures] = useState(0);
   const [leftPaneWidth, setLeftPaneWidth] = useState(25);
   const [isResizing, setIsResizing] = useState(false);
+  const [showMoveModal, setShowMoveModal] = useState(false);
 
   const sortLayers = (layers: Layer[]): Layer[] => {
     return layers.sort((a, b) => a.name.localeCompare(b.name));
@@ -95,13 +83,30 @@ const Page: React.FC = () => {
 
   const handleDelete = () => {
     api.delete(`/gis/layer/${selectedLayer?.id}/`).then((response) => {
-      setLayers(
-        sortLayers(layers.filter((layer) => layer.id !== selectedLayer?.id)),
+      const removeLayerRecursive = (dirs) => {
+        return dirs.map((dir) => {
+          const filteredLayers = dir.layers.filter(
+            (layer) => layer.id !== selectedLayer?.id,
+          );
+          const updatedSubdirectories = dir.subdirectories
+            ? removeLayerRecursive(dir.subdirectories)
+            : [];
+
+          return {
+            ...dir,
+            layers: filteredLayers,
+            subdirectories: updatedSubdirectories,
+          };
+        });
+      };
+
+      setDirectories((prevDirectories) =>
+        removeLayerRecursive(prevDirectories),
       );
-      api.get('/gis/layers/').then((response) => {
-        const responseData = response.data;
-        handleSelection(responseData.layers[0]);
-      });
+      setHomeLayers((prevHomeLayers) =>
+        prevHomeLayers.filter((layer) => layer.id !== selectedLayer?.id),
+      );
+      setSelectedLayer(null);
     });
   };
 
@@ -170,12 +175,19 @@ const Page: React.FC = () => {
           id,
         );
 
-        // Add the directory to the new parent
+        const addAndSortDirectories = (dirs, newDir) => {
+          const updatedDirs = [...dirs, newDir];
+          return updatedDirs.sort((a, b) => a.name.localeCompare(b.name));
+        };
+
         return parent === null
-          ? [...directoriesWithoutUpdated, updatedDirectory]
+          ? addAndSortDirectories(directoriesWithoutUpdated, updatedDirectory)
           : walkTree(directoriesWithoutUpdated, parent, (dir) => ({
               ...dir,
-              subdirectories: [...(dir.subdirectories || []), updatedDirectory],
+              subdirectories: addAndSortDirectories(
+                dir.subdirectories || [],
+                updatedDirectory,
+              ),
             }));
       });
     });
@@ -198,6 +210,63 @@ const Page: React.FC = () => {
 
   const handleMouseUp = () => {
     setIsResizing(false);
+  };
+  const handleMoveLayer = (newParentId) => {
+    api
+      .put(`/gis/layer/${selectedLayer?.id}/`, { directory: newParentId })
+      .then((response) => {
+        const movedLayer = response.data;
+
+        const updateDirectories = (dirs, layer, parentId, remove = false) => {
+          return dirs.map((dir) => {
+            if (dir.id === parentId) {
+              return {
+                ...dir,
+                layers: remove
+                  ? dir.layers.filter((l) => l.id !== layer.id)
+                  : [...(dir.layers || []), layer],
+              };
+            }
+
+            if (dir.subdirectories) {
+              return {
+                ...dir,
+                subdirectories: updateDirectories(
+                  dir.subdirectories,
+                  layer,
+                  parentId,
+                  remove,
+                ),
+              };
+            }
+
+            return dir;
+          });
+        };
+
+        setDirectories((prevDirectories) => {
+          // Remove the layer from its old location
+          const directoriesWithoutLayer = updateDirectories(
+            prevDirectories,
+            selectedLayer,
+            selectedLayer.directory,
+            true,
+          );
+          // Add the layer to its new location
+          return updateDirectories(
+            directoriesWithoutLayer,
+            movedLayer,
+            newParentId,
+          );
+        });
+
+        setHomeLayers((prevHomeLayers) =>
+          prevHomeLayers.filter((layer) => layer.id !== selectedLayer?.id),
+        );
+      });
+
+    console.log('Move layer to:', newParentId);
+    setShowMoveModal(false);
   };
 
   return (
@@ -236,9 +305,9 @@ const Page: React.FC = () => {
               onMouseDown={handleMouseDown}
             />
             <div
-              className="absolute left-1/2 transform -translate-x-1/2 bg-white rounded-md p-1 pr-0 pl-0 r-col-resize border"
+              className="absolute left-1/2 transform -translate-x-1/2 bg-white rounded-md p-1 pr-0 pl-0 cursor-col-resize border drop-shadow-sm"
               onMouseDown={handleMouseDown}
-              style={{ zIndex: 100 }}
+              style={{ zIndex: 9 }}
             >
               <GripVerticalIcon />
             </div>
@@ -257,14 +326,14 @@ const Page: React.FC = () => {
                       key={selectedLayer.id}
                       initialName={selectedLayer.name}
                       layerId={selectedLayer.id}
-                      layers={layers}
-                      setLayers={setLayers}
+                      layers={homeLayers}
+                      setLayers={setHomeLayers}
                       sortLayers={sortLayers}
                       directories={directories}
                       setDirectories={setDirectories}
                     ></EditableName>
                     <button
-                      onClick={() => {}}
+                      onClick={setShowMoveModal}
                       className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
                     >
                       <FolderMoveIcon width="24px" height="24px" />
@@ -295,6 +364,15 @@ const Page: React.FC = () => {
           </div>
         </div>
       </div>
+      {showMoveModal && (
+        <MoveFolderModal
+          current={selectedLayer}
+          homeLayers={homeLayers}
+          directories={directories}
+          onClose={() => setShowMoveModal(false)}
+          onMove={(newParentId) => handleMoveLayer(newParentId)}
+        />
+      )}
     </Suspense>
   );
 };
