@@ -4,6 +4,7 @@ import Button from './Button';
 import { useRouter } from 'next/navigation';
 import { getCookie } from '../app/accounts/auth';
 import api from '../app/api';
+import { Directory } from '../app/data/types';
 
 const FileUploadForm: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -61,12 +62,12 @@ const FileUploadForm: React.FC = () => {
       </div>
       <div className="mb-4">
         <select
-          value={directory}
+          value={`${directory}`}
           onChange={(e) => setDirectory(parseInt(e.target.value))}
           disabled={uploading}
         >
           <option value="">Select Directory</option>
-          {directories.map((directory) => (
+          {directories.map((directory: Directory) => (
             <option key={directory.id} value={directory.id}>
               {directory.name}
             </option>

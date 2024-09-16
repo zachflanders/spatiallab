@@ -1,21 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline';
+import { Directory, Layer } from './types';
 
-const MoveFolderModal = ({
+interface MoveFolderModalProps {
+  current: Layer | Directory;
+  homeLayers: Layer[];
+  directories: Directory[];
+  onClose: () => void;
+  onMove: (folder: number) => void;
+}
+
+const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
   current,
   homeLayers,
   directories,
   onClose,
   onMove,
 }) => {
-  const [selectedFolder, setSelectedFolder] = useState(null);
-  const [collapsedFolders, setCollapsedFolders] = useState({});
+  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
+  const [collapsedFolders, setCollapsedFolders] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     // Initialize all folders as collapsed
-    const initializeCollapsedState = (dirs) => {
-      const collapsedState = {};
-      const traverse = (directories) => {
+    const initializeCollapsedState = (dirs: Directory[]) => {
+      const collapsedState: { [key: string]: boolean } = {};
+      const traverse = (directories: Directory[]) => {
         directories.forEach((dir) => {
           collapsedState[dir.id] = true;
           if (dir.subdirectories && dir.subdirectories.length > 0) {
@@ -29,30 +40,32 @@ const MoveFolderModal = ({
     setCollapsedFolders(initializeCollapsedState(directories));
   }, [directories]);
 
-  const handleSelectFolder = (folder) => {
+  const handleSelectFolder = (folder: number) => {
+    console.log(`Selected folder: ${folder}`);
     setSelectedFolder(folder);
   };
 
   const handleMove = () => {
     if (selectedFolder) {
+      console.log(`Moving to ${selectedFolder}`);
       onMove(selectedFolder);
       onClose();
     }
   };
 
-  const toggleCollapse = (folderId) => {
+  const toggleCollapse = (folderId: number) => {
     setCollapsedFolders((prev) => ({
       ...prev,
       [folderId]: !prev[folderId],
     }));
   };
 
-  const renderDirectoryTree = (dirs) => {
+  const renderDirectoryTree = (dirs: Directory[]) => {
     return dirs.map((dir) => (
       <div key={dir.id} className="ml-4">
         <div
-          className={`p-1 cursor-pointer flex items-center ${selectedFolder === dir.id ? 'bg-gray-200' : ''}`}
-          onClick={() => handleSelectFolder(dir.id)}
+          className={`p-1 cursor-pointer flex items-center ${selectedFolder === Number(dir.id) ? 'bg-gray-200' : ''}`}
+          onClick={() => handleSelectFolder(Number(dir.id))}
         >
           <span
             onClick={() => toggleCollapse(dir.id)}

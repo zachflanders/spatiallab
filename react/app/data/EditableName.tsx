@@ -1,7 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import api from '../api';
+import { Layer } from './types';
 
 interface EditableNameProps {
   initialName: string;
@@ -55,10 +56,14 @@ const EditableName: React.FC<EditableNameProps> = ({
       );
       const sortedLayers = sortLayers(updatedLayers);
       setLayers(sortedLayers);
-      const updateDirectoryRecursive = (directories, layerId, data) => {
+      const updateDirectoryRecursive = (
+        directories: any[],
+        layerId: number,
+        data: any,
+      ): any[] => {
         return directories.map((dir) => {
-          const updatedLayers = dir.layers.map((layer) =>
-            layer.id === layerId ? data : layer,
+          const updatedLayers = dir.layers.map((layer: Layer) =>
+            layer.id === `${layerId}` ? data : layer,
           );
           if (dir.subdirectories) {
             return {

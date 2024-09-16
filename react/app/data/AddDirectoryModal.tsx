@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 
-const AddDirectoryModal = ({ isOpen, onClose, directories, addDirectory }) => {
-  const [directoryName, setDirectoryName] = useState('');
-  const [parentDirectory, setParentDirectory] = useState('');
+interface AddDirectoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  directories: { id: string; name: string }[];
+  addDirectory: (name: string, parentId: number | null) => void;
+}
 
-  const handleSubmit = (e) => {
+const AddDirectoryModal: React.FC<AddDirectoryModalProps> = ({
+  isOpen,
+  onClose,
+  directories,
+  addDirectory,
+}) => {
+  const [directoryName, setDirectoryName] = useState('');
+  const [parentDirectory, setParentDirectory] = useState<number | null>(null);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     addDirectory(directoryName, parentDirectory || null);
     setDirectoryName('');
@@ -28,8 +40,12 @@ const AddDirectoryModal = ({ isOpen, onClose, directories, addDirectory }) => {
           />
           <select
             className="border p-2 mb-4 w-full"
-            value={parentDirectory}
-            onChange={(e) => setParentDirectory(e.target.value)}
+            value={`${parentDirectory}`}
+            onChange={(e) =>
+              setParentDirectory(
+                e.target.value ? parseInt(e.target.value) : null,
+              )
+            }
           >
             <option value="">Select Parent Directory</option>
             {directories.map((directory) => (

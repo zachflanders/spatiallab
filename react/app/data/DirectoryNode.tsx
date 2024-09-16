@@ -19,7 +19,10 @@ interface DirectoryNodeProps {
   addDirectory: (name: string, parent: number | null) => void;
   deleteDirectory: (id: number) => void;
   updateDirectory: (id: number, name: string, parent: number | null) => void;
-  onContextMenu: (event: React.MouseEvent, directory: Directory) => void;
+  onContextMenu: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    directory: Directory,
+  ) => void;
 }
 
 const DirectoryNode: React.FC<DirectoryNodeProps> = ({
@@ -41,15 +44,15 @@ const DirectoryNode: React.FC<DirectoryNodeProps> = ({
     setIsExpanded(!isExpanded);
   };
 
-  const handleNameChange = (event) => {
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewName(event.target.value);
   };
 
-  const submitRename = async (event) => {
+  const submitRename = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       await api.put(`/gis/directories/${directory.id}/`, { name: newName });
-      updateDirectory(directory.id, newName, directory.parent);
+      updateDirectory(directory.id, newName, Number(directory.parent) ?? null);
       setIsEditingDirectory(false);
     } catch (error) {
       console.error('Failed to rename directory:', error);
@@ -110,8 +113,9 @@ const DirectoryNode: React.FC<DirectoryNodeProps> = ({
                 key={subdirectory.id}
                 directory={subdirectory}
                 selectedLayer={selectedLayer}
+                editingDirectory={editingDirectory} // Add this line
                 isEditingDirectory={
-                  editingDirectory && editingDirectory.id === subdirectory.id
+                  !!editingDirectory && editingDirectory.id === subdirectory.id
                 }
                 setIsEditingDirectory={setIsEditingDirectory}
                 handleSelection={handleSelection}

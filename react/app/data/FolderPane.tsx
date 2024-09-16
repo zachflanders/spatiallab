@@ -21,7 +21,11 @@ interface FolderPaneProps {
   addDirectory: (name: string, parent: number | null) => void;
   deleteDirectory: (id: number) => void;
   updateDirectory: (id: number, name: string, parent: number | null) => void;
-  moveDirectory: (id: number, parent: number | null) => void;
+  moveDirectory: (
+    directoryId: number,
+    directoryName: string,
+    parent: number | null,
+  ) => void;
 }
 
 const FolderPane: React.FC<FolderPaneProps> = ({
@@ -48,12 +52,17 @@ const FolderPane: React.FC<FolderPaneProps> = ({
     x: 0,
     y: 0,
   });
-  const [contextMenuDirectory, setContextMenuDirectory] = useState(null);
-  const [editingDirectory, setEditingDirectory] = useState(null);
+  const [contextMenuDirectory, setContextMenuDirectory] =
+    useState<Directory | null>(null);
+  const [editingDirectory, setEditingDirectory] = useState<Directory | null>(
+    null,
+  );
   const [showMoveModal, setShowMoveModal] = useState(false);
-  const [directoryToMove, setDirectoryToMove] = useState(null);
+  const [directoryToMove, setDirectoryToMove] = useState<Directory | null>(
+    null,
+  );
 
-  const handleOptionClick = (option) => {
+  const handleOptionClick = (option: string) => {
     console.log(option);
   };
   const toggleDropdown = () => {
@@ -66,7 +75,10 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   const closeModal = () => {
     setIsModalOpen(false);
   };
-  const handleContextMenu = (event, directory) => {
+  const handleContextMenu = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    directory: Directory,
+  ) => {
     event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuDirectory(directory);
@@ -78,7 +90,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
     setContextMenuDirectory(null);
   };
 
-  const startEditing = (directory) => {
+  const startEditing = (directory: Directory | null) => {
     setEditingDirectory(directory);
     closeContextMenu();
   };
@@ -87,18 +99,24 @@ const FolderPane: React.FC<FolderPaneProps> = ({
     startEditing(contextMenuDirectory);
   };
 
-  const doMoveDirectory = (newParentId) => {
-    moveDirectory(directoryToMove.id, directoryToMove.name, newParentId);
+  const doMoveDirectory = (newParentId: number | null) => {
+    if (directoryToMove) {
+      console.log('Moving directory', directoryToMove.id, 'to', newParentId);
+      moveDirectory(directoryToMove.id, directoryToMove.name, newParentId);
+    }
   };
 
   const handleMove = () => {
     setShowMoveModal(true);
     setDirectoryToMove(contextMenuDirectory);
+    console.log('Moving directory', contextMenuDirectory);
     closeContextMenu();
   };
 
   const handleDelete = () => {
-    deleteDirectory(contextMenuDirectory.id);
+    if (contextMenuDirectory) {
+      deleteDirectory(contextMenuDirectory.id);
+    }
     closeContextMenu();
   };
   return (
@@ -149,9 +167,15 @@ const FolderPane: React.FC<FolderPaneProps> = ({
               selectedLayer={selectedLayer}
               editingDirectory={editingDirectory}
               isEditingDirectory={
-                editingDirectory && editingDirectory.id === directory.id
+                editingDirectory ? editingDirectory.id === directory.id : false
               }
-              setIsEditingDirectory={setEditingDirectory}
+              setIsEditingDirectory={(isEditing) => {
+                if (isEditing) {
+                  setEditingDirectory(directory);
+                } else {
+                  setEditingDirectory(null);
+                }
+              }}
               handleSelection={handleSelection}
               addDirectory={addDirectory}
               deleteDirectory={deleteDirectory}
@@ -181,7 +205,10 @@ const FolderPane: React.FC<FolderPaneProps> = ({
       <AddDirectoryModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        directories={directories}
+        directories={directories.map((dir) => ({
+          id: dir.id.toString(),
+          name: dir.name,
+        }))}
         addDirectory={addDirectory}
       />
       {contextMenuVisible && (
@@ -214,7 +241,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           </button>
         </div>
       )}
-      {showMoveModal && (
+      {showMoveModal && directoryToMove && (
         <MoveFolderModal
           current={directoryToMove}
           homeLayers={homeLayers}

@@ -49,7 +49,7 @@ const Page: React.FC = () => {
       const selectedLayerParam = searchParams.get('selectedLayer');
       if (selectedLayerParam) {
         const layer = sortedLayers.find(
-          (layer) => layer.id === parseInt(selectedLayerParam),
+          (layer) => layer.id === selectedLayerParam,
         );
         if (layer) {
           handleSelection(layer);
@@ -83,8 +83,8 @@ const Page: React.FC = () => {
 
   const handleDelete = () => {
     api.delete(`/gis/layer/${selectedLayer?.id}/`).then((response) => {
-      const removeLayerRecursive = (dirs) => {
-        return dirs.map((dir) => {
+      const removeLayerRecursive = (dirs: Directory[]): Directory[] => {
+        return dirs.map((dir: Directory) => {
           const filteredLayers = dir.layers.filter(
             (layer) => layer.id !== selectedLayer?.id,
           );
@@ -112,7 +112,11 @@ const Page: React.FC = () => {
 
   const handleExport = () => {};
 
-  const walkTree = (directories, parentId, callback) => {
+  const walkTree = (
+    directories: Directory[],
+    parentId: number,
+    callback: (dir: Directory) => Directory,
+  ): Directory[] => {
     return directories.map((dir) => {
       if (dir.id === Number(parentId)) {
         return callback(dir);
@@ -129,7 +133,10 @@ const Page: React.FC = () => {
     });
   };
 
-  const removeDirectoryRecursive = (directories, id) => {
+  const removeDirectoryRecursive = (
+    directories: Directory[],
+    id: number,
+  ): Directory[] => {
     return directories
       .filter((dir) => dir.id !== id)
       .map((dir) => {
@@ -175,7 +182,10 @@ const Page: React.FC = () => {
           id,
         );
 
-        const addAndSortDirectories = (dirs, newDir) => {
+        const addAndSortDirectories = (
+          dirs: Directory[],
+          newDir: Directory,
+        ) => {
           const updatedDirs = [...dirs, newDir];
           return updatedDirs.sort((a, b) => a.name.localeCompare(b.name));
         };
@@ -193,15 +203,19 @@ const Page: React.FC = () => {
     });
   };
 
-  const handleMoveFolder = (directory_id, directory_name, newParentId) => {
-    updateDirectory(directory_id, directory_name, newParentId);
+  const handleMoveFolder = (
+    directoryId: number,
+    directoryName: string,
+    newParentId: number | null,
+  ) => {
+    updateDirectory(directoryId, directoryName, newParentId);
   };
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     setIsResizing(true);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (isResizing) {
       const newWidth = (e.clientX / window.innerWidth) * 100;
       setLeftPaneWidth(newWidth);
@@ -211,13 +225,18 @@ const Page: React.FC = () => {
   const handleMouseUp = () => {
     setIsResizing(false);
   };
-  const handleMoveLayer = (newParentId) => {
+  const handleMoveLayer = (newParentId: number | null) => {
     api
       .put(`/gis/layer/${selectedLayer?.id}/`, { directory: newParentId })
       .then((response) => {
         const movedLayer = response.data;
 
-        const updateDirectories = (dirs, layer, parentId, remove = false) => {
+        const updateDirectories = (
+          dirs: Directory[],
+          layer: Layer,
+          parentId: number,
+          remove = false,
+        ): Directory[] => {
           return dirs.map((dir) => {
             if (dir.id === parentId) {
               return {
@@ -246,18 +265,20 @@ const Page: React.FC = () => {
 
         setDirectories((prevDirectories) => {
           // Remove the layer from its old location
-          const directoriesWithoutLayer = updateDirectories(
-            prevDirectories,
-            selectedLayer,
-            selectedLayer.directory,
-            true,
-          );
-          // Add the layer to its new location
-          return updateDirectories(
-            directoriesWithoutLayer,
-            movedLayer,
-            newParentId,
-          );
+          if (selectedLayer && newParentId) {
+            const directoriesWithoutLayer = updateDirectories(
+              prevDirectories,
+              selectedLayer,
+              selectedLayer.directory,
+              true,
+            );
+            return updateDirectories(
+              directoriesWithoutLayer,
+              movedLayer,
+              newParentId,
+            );
+          }
+          return prevDirectories; // Ensure a Directory[] is always returned
         });
 
         setHomeLayers((prevHomeLayers) =>
@@ -325,7 +346,7 @@ const Page: React.FC = () => {
                     <EditableName
                       key={selectedLayer.id}
                       initialName={selectedLayer.name}
-                      layerId={selectedLayer.id}
+                      layerId={Number(selectedLayer.id)}
                       layers={homeLayers}
                       setLayers={setHomeLayers}
                       sortLayers={sortLayers}
@@ -333,7 +354,7 @@ const Page: React.FC = () => {
                       setDirectories={setDirectories}
                     ></EditableName>
                     <button
-                      onClick={setShowMoveModal}
+                      onClick={() => setShowMoveModal(true)}
                       className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
                     >
                       <FolderMoveIcon width="24px" height="24px" />
@@ -355,7 +376,7 @@ const Page: React.FC = () => {
                   </div>
                 </div>
                 <GeoServerMap
-                  layer={selectedLayer.id}
+                  layer={Number(selectedLayer.id)}
                   extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
                 />
                 <LayerTable headers={headers} data={data} />
@@ -364,7 +385,7 @@ const Page: React.FC = () => {
           </div>
         </div>
       </div>
-      {showMoveModal && (
+      {showMoveModal && selectedLayer && (
         <MoveFolderModal
           current={selectedLayer}
           homeLayers={homeLayers}
