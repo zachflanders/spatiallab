@@ -7,7 +7,7 @@ import {
   FolderIcon,
   ChevronDownIcon,
   UserGroupIcon,
-  UserIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline';
 import { LayerIcon } from './LayerIcon';
 import AddDirectoryModal from './AddDirectoryModal';
@@ -27,6 +27,7 @@ interface Directory {
 
 interface FolderPaneProps {
   layers: Layer[];
+  homeLayers: Layer[];
   directories: Directory[];
   selectedLayer: Layer | null;
   setDirectories: React.Dispatch<React.SetStateAction<Directory[]>>;
@@ -38,6 +39,7 @@ interface FolderPaneProps {
 
 const FolderPane: React.FC<FolderPaneProps> = ({
   layers,
+  homeLayers,
   directories,
   selectedLayer,
   setDirectories,
@@ -48,7 +50,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
 }) => {
   const [selectedOption, setSelectedOption] = useState(
     <div className="flex items-center">
-      <UserIcon className="h-5 w-5 mr-2" /> My Data
+      <HomeIcon className="h-5 w-5 mr-2" /> Home
     </div>,
   );
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -83,7 +85,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
                 className="p-2 cursor-pointer hover:bg-gray-100 flex items-center"
                 onClick={() => handleOptionClick('My data')}
               >
-                <UserIcon className="h-5 w-5 mr-2" /> My Data
+                <HomeIcon className="h-5 w-5 mr-2" /> Home
               </div>
               <div className="mb-2">
                 <div className="px-2 mt-2 text-xs text-gray-500">Teams:</div>
@@ -106,20 +108,40 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           <FolderPlusIcon className="h-5 w-5" />
         </button>
       </div>
-      {directories.map((directory) => (
-        <DirectoryNode
-          key={directory.id}
-          directory={directory}
-          selectedLayer={selectedLayer}
-          handleSelection={handleSelection}
-          addDirectory={addDirectory}
-          deleteDirectory={deleteDirectory}
-          updateDirectory={updateDirectory}
-        />
-      ))}
+      {directories &&
+        directories.map((directory) => (
+          <DirectoryNode
+            key={directory.id}
+            directory={directory}
+            selectedLayer={selectedLayer}
+            handleSelection={handleSelection}
+            addDirectory={addDirectory}
+            deleteDirectory={deleteDirectory}
+            updateDirectory={updateDirectory}
+          />
+        ))}
+      {homeLayers &&
+        homeLayers.map((layer) => (
+          <div
+            key={layer.id}
+            className={`px-2 mr-2 mt-1 ml-8 flex items-center cursor-pointer rounded-md hover:bg-gray-100 ${selectedLayer && selectedLayer.id === layer.id ? 'bg-gray-100' : 'bg-white'}`}
+            onClick={() => handleSelection(layer)}
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span className="mr-2">
+              <LayerIcon fill="#000" width="20px" height="20px" />
+            </span>
+            {layer.name}
+          </div>
+        ))}
       <AddDirectoryModal
         isOpen={isModalOpen}
         onClose={closeModal}
+        directories={directories}
         addDirectory={addDirectory}
       />
     </div>

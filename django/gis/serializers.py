@@ -45,10 +45,17 @@ class FileUploadSerializer(serializers.Serializer):
 
 
 class DirectorySerializer(serializers.ModelSerializer):
+    subdirectories = serializers.SerializerMethodField()
+
     class Meta:
         model = Directory
-        fields = ["id", "name", "parent", "user"]
+        fields = ["id", "name", "parent", "user", "subdirectories"]
         read_only_fields = ["user"]
+
+    def get_subdirectories(self, obj):
+        return DirectorySerializer(
+            obj.subdirectories.all(), many=True, context=self.context
+        ).data
 
     def create(self, validated_data):
         request = self.context.get("request")

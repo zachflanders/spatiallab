@@ -5,11 +5,8 @@ import GeoServerMap from '@/components/GeoServerMap';
 import LayerTable from '@/components/LayerTable';
 import EditableName from './EditableName';
 import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/20/solid';
-import { getCookie } from '../accounts/auth';
 import api from '../api';
 import FolderPane from './FolderPane';
-import { set } from 'ol/transform';
-import { dir } from 'console';
 
 interface Layer {
   id: number;
@@ -30,8 +27,8 @@ const Page: React.FC = () => {
   const searchParams = useSearchParams();
   const [directories, setDirectories] = useState<Directory[]>([]);
   const [layers, setLayers] = useState<Layer[]>([]);
+  const [homeLayers, setHomeLayers] = useState<Layer[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<Layer | null>(null);
-  const [selectedLayerData, setSelectedLayerData] = useState({});
   const [headers, setHeaders] = useState<string[]>([]);
   const [data, setData] = useState([]);
   const [extent, setExtent] = useState<[number, number, number, number] | []>(
@@ -41,52 +38,36 @@ const Page: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalFeatures, setTotalFeatures] = useState(0);
-  const [csrfToken, setCsrfToken] = useState<string>('');
 
   const sortLayers = (layers: Layer[]): Layer[] => {
     return layers.sort((a, b) => a.name.localeCompare(b.name));
   };
 
   useEffect(() => {
-    // Fetch the data from the backend
-    const csrftoken = getCookie('csrftoken');
-    setCsrfToken(csrftoken || '');
-    api
-      .get('/gis/layers/', { headers: { 'X-CSRFToken': csrfToken || '' } })
-      .then((response) => {
-        const responseData = response.data;
-        const sortedLayers = sortLayers(responseData.layers);
-        setLayers(sortedLayers);
-        console.log(sortedLayers);
-
-        api.get('/gis/directories/').then((response) => {
-          setDirectories(response.data);
-          const homeLayers = sortedLayers.filter((layer) => !layer.directory);
-          const homeDir: Directory = {
-            id: 1,
-            name: 'Home',
-            layers: homeLayers,
-            subdirectories: directories,
-          };
-          console.log(homeDir);
-          console.log(homeLayers);
-          setDirectories([homeDir, ...response.data]);
-          console.log(directories);
-        });
-
-        const selectedLayerParam = searchParams.get('selectedLayer');
-        if (selectedLayerParam) {
-          const layer = sortedLayers.find(
-            (layer) => layer.id === parseInt(selectedLayerParam),
-          );
-          if (layer) {
-            handleSelection(layer);
-          }
-        } else {
-          handleSelection(sortedLayers[0]);
-        }
+    api.get('/gis/layers/').then((response) => {
+      const responseData = response.data;
+      const sortedLayers = sortLayers(responseData.layers);
+      setLayers(sortedLayers);
+      api.get('/gis/directories/').then((response) => {
+        setDirectories(response.data);
+        console.log(response.data);
+        const homeLayers = sortedLayers.filter((layer) => !layer.directory);
+        setHomeLayers(homeLayers);
       });
-  }, [searchParams, setLayers, setHeaders, setData, setExtent, setCsrfToken]);
+
+      const selectedLayerParam = searchParams.get('selectedLayer');
+      if (selectedLayerParam) {
+        const layer = sortedLayers.find(
+          (layer) => layer.id === parseInt(selectedLayerParam),
+        );
+        if (layer) {
+          handleSelection(layer);
+        }
+      } else {
+        handleSelection(sortedLayers[0]);
+      }
+    });
+  }, [searchParams, setLayers, setHeaders, setData, setExtent]);
 
   const handleSelection = (layer: Layer, page = 1, pageSize = 10) => {
     setSelectedLayer(layer);
@@ -95,7 +76,6 @@ const Page: React.FC = () => {
     setExtent([]);
     api
       .get(`/gis/layer/${layer.id}/`, {
-        headers: { 'X-CSRFToken': csrfToken || '' },
         params: { page, pageSize: pageSize },
       })
       .then((response) => {
@@ -111,19 +91,15 @@ const Page: React.FC = () => {
   };
 
   const handleDelete = () => {
-    api
-      .delete(`/gis/layer/${selectedLayer?.id}/`, {
-        headers: { 'X-CSRFToken': csrfToken },
-      })
-      .then((response) => {
-        setLayers(
-          sortLayers(layers.filter((layer) => layer.id !== selectedLayer?.id)),
-        );
-        api.get('/gis/layers/').then((response) => {
-          const responseData = response.data;
-          handleSelection(responseData.layers[0]);
-        });
+    api.delete(`/gis/layer/${selectedLayer?.id}/`).then((response) => {
+      setLayers(
+        sortLayers(layers.filter((layer) => layer.id !== selectedLayer?.id)),
+      );
+      api.get('/gis/layers/').then((response) => {
+        const responseData = response.data;
+        handleSelection(responseData.layers[0]);
       });
+    });
   };
 
   const handleExport = () => {};
@@ -135,29 +111,19 @@ const Page: React.FC = () => {
   };
 
   const deleteDirectory = (id: number) => {
-    api
-      .delete(`/gis/directories/${id}/`, {
-        headers: { 'X-CSRFToken': csrfToken || '' },
-      })
-      .then(() => {
-        setDirectories(directories.filter((dir) => dir.id !== id));
-      });
+    api.delete(`/gis/directories/${id}/`).then(() => {
+      setDirectories(directories.filter((dir) => dir.id !== id));
+    });
   };
 
   const updateDirectory = (id: number, name: string, parent: number | null) => {
-    api
-      .put(
-        `/gis/directories/${id}/`,
-        { name, parent },
-        { headers: { 'X-CSRFToken': csrfToken || '' } },
-      )
-      .then((response) => {
-        setDirectories(
-          directories.map((dir) =>
-            dir.id === id ? { ...dir, name, parent } : dir,
-          ),
-        );
-      });
+    api.put(`/gis/directories/${id}/`, { name, parent }).then((response) => {
+      setDirectories(
+        directories.map((dir) =>
+          dir.id === id ? { ...dir, name, parent } : dir,
+        ),
+      );
+    });
   };
 
   return (
@@ -169,6 +135,7 @@ const Page: React.FC = () => {
           <div className="w-1/4 bg-white overflow-auto border-r h-full">
             <FolderPane
               layers={layers}
+              homeLayers={homeLayers}
               directories={directories}
               setDirectories={setDirectories}
               selectedLayer={selectedLayer}

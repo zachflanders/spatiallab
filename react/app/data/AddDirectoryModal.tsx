@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 
-const AddDirectoryModal = ({ isOpen, onClose, addDirectory }) => {
+const AddDirectoryModal = ({ isOpen, onClose, directories, addDirectory }) => {
   const [directoryName, setDirectoryName] = useState('');
+  const [parentDirectory, setParentDirectory] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    addDirectory(directoryName, null);
+    addDirectory(directoryName, parentDirectory || null);
     setDirectoryName('');
     onClose();
   };
@@ -25,6 +26,18 @@ const AddDirectoryModal = ({ isOpen, onClose, addDirectory }) => {
             onChange={(e) => setDirectoryName(e.target.value)}
             required
           />
+          <select
+            className="border p-2 mb-4 w-full"
+            value={parentDirectory}
+            onChange={(e) => setParentDirectory(e.target.value)}
+          >
+            <option value="">Select Parent Directory</option>
+            {directories.map((directory) => (
+              <option key={directory.id} value={directory.id}>
+                {directory.name}
+              </option>
+            ))}
+          </select>
           <div className="flex justify-end">
             <button
               type="button"
