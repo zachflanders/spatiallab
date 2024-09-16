@@ -53,6 +53,7 @@ class FileUploadView(APIView):
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
             file = serializer.validated_data["file"]
+            directory_id = request.data.get("directory")
             logger.info("Uploading file to GCS")
 
             # Google Cloud Storage upload
@@ -67,7 +68,9 @@ class FileUploadView(APIView):
             logger.info(f"File uploaded to GCS: {gcs_path}")
 
             # Call async task to ingest file into DB
-            layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
+            layer_id = ingest_file_to_db_task(
+                gcs_path, file.name, directory_id, request.user.email
+            )
 
             self.create_feature_view(layer_id)
 
@@ -216,7 +219,9 @@ class DirectoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Directory.objects.filter(user=self.request.user, parent__isnull=True)
+        return Directory.objects.filter(
+            user=self.request.user, parent__isnull=True
+        ).prefetch_related("layers")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

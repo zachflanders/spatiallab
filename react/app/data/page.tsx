@@ -4,9 +4,10 @@ import { useSearchParams } from 'next/navigation';
 import GeoServerMap from '@/components/GeoServerMap';
 import LayerTable from '@/components/LayerTable';
 import EditableName from './EditableName';
-import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/20/solid';
+import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import api from '../api';
 import FolderPane from './FolderPane';
+import { FolderMoveIcon } from './FolderMoveIcon';
 
 interface Layer {
   id: number;
@@ -48,6 +49,7 @@ const Page: React.FC = () => {
       const responseData = response.data;
       const sortedLayers = sortLayers(responseData.layers);
       setLayers(sortedLayers);
+      console.log(responseData.layers);
       api.get('/gis/directories/').then((response) => {
         setDirectories(response.data);
         console.log(response.data);
@@ -126,6 +128,10 @@ const Page: React.FC = () => {
     });
   };
 
+  const handleMoveFolder = () => {
+    console.log('Move folder');
+  };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-screen" style={{ marginTop: -72 }}>
@@ -154,24 +160,32 @@ const Page: React.FC = () => {
                   className="flex justify-between items-center p-2 pr-4 border-b"
                   style={{ height: '59px' }}
                 >
-                  <EditableName
-                    key={selectedLayer.id}
-                    initialName={selectedLayer.name}
-                    layerId={selectedLayer.id}
-                    layers={layers}
-                    setLayers={setLayers}
-                    sortLayers={sortLayers}
-                  ></EditableName>
+                  <div class="flex items-center">
+                    <EditableName
+                      key={selectedLayer.id}
+                      initialName={selectedLayer.name}
+                      layerId={selectedLayer.id}
+                      layers={layers}
+                      setLayers={setLayers}
+                      sortLayers={sortLayers}
+                    ></EditableName>
+                    <button
+                      onClick={handleMoveFolder}
+                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+                    >
+                      <FolderMoveIcon width="24px" height="24px" />
+                    </button>
+                  </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={handleDelete}
-                      className="p-1 hover:bg-gray-200 bg-gray-100 text-gray-500 rounded hover:text-gray-700 focus:outline-none"
+                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
                     <button
                       onClick={handleExport}
-                      className="p-1 hover:bg-gray-200 bg-gray-100 text-gray-500 rounded hover:text-gray-700 focus:outline-none"
+                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
                     >
                       <ArrowDownTrayIcon className="h-5 w-5" />
                     </button>

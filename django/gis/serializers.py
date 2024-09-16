@@ -46,10 +46,11 @@ class FileUploadSerializer(serializers.Serializer):
 
 class DirectorySerializer(serializers.ModelSerializer):
     subdirectories = serializers.SerializerMethodField()
+    layers = LayerSerializer(many=True, read_only=True)
 
     class Meta:
         model = Directory
-        fields = ["id", "name", "parent", "user", "subdirectories"]
+        fields = ["id", "name", "parent", "user", "subdirectories", "layers"]
         read_only_fields = ["user"]
 
     def get_subdirectories(self, obj):

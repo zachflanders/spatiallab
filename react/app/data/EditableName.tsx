@@ -88,7 +88,18 @@ const EditableName: React.FC<EditableNameProps> = ({
           ref={inputRef}
         />
       ) : (
-        <h1 className="p-2 font-bold">{name}</h1>
+        <h1
+          className="p-2 font-bold border rounded border-transparent hover:border-gray-300"
+          onClick={handleEditClick}
+          style={{
+            maxWidth: '400px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {name}
+        </h1>
       )}
       {isEditing ? (
         <>
@@ -106,12 +117,7 @@ const EditableName: React.FC<EditableNameProps> = ({
           </button>
         </>
       ) : (
-        <button
-          onClick={handleEditClick}
-          className="ml-2 p-1 hover:bg-gray-200 bg-gray-100 text-gray-500 rounded hover:text-gray-700 focus:outline-none"
-        >
-          <PencilIcon className="h-5 w-5" />
-        </button>
+        <></>
       )}
     </div>
   );
