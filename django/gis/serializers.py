@@ -46,7 +46,7 @@ class FileUploadSerializer(serializers.Serializer):
 
 class DirectorySerializer(serializers.ModelSerializer):
     subdirectories = serializers.SerializerMethodField()
-    layers = LayerSerializer(many=True, read_only=True)
+    layers = serializers.SerializerMethodField()
 
     class Meta:
         model = Directory
@@ -55,7 +55,12 @@ class DirectorySerializer(serializers.ModelSerializer):
 
     def get_subdirectories(self, obj):
         return DirectorySerializer(
-            obj.subdirectories.all(), many=True, context=self.context
+            obj.subdirectories.all().order_by("name"), many=True, context=self.context
+        ).data
+
+    def get_layers(self, obj):
+        return LayerSerializer(
+            obj.layers.all().order_by("name"), many=True, context=self.context
         ).data
 
     def create(self, validated_data):

@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { getCookie } from '../accounts/auth';
 import api from '../api';
 
 interface EditableNameProps {
@@ -10,6 +9,8 @@ interface EditableNameProps {
   layers: any[];
   setLayers: React.Dispatch<React.SetStateAction<any[]>>;
   sortLayers: (layers: any[]) => any[];
+  directories: any[];
+  setDirectories: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const EditableName: React.FC<EditableNameProps> = ({
@@ -18,12 +19,12 @@ const EditableName: React.FC<EditableNameProps> = ({
   layers,
   setLayers,
   sortLayers,
+  directories,
+  setDirectories,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(initialName);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-
-  const csrftoken = getCookie('csrftoken');
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -54,6 +55,32 @@ const EditableName: React.FC<EditableNameProps> = ({
       );
       const sortedLayers = sortLayers(updatedLayers);
       setLayers(sortedLayers);
+      const updateDirectoryRecursive = (directories, layerId, data) => {
+        return directories.map((dir) => {
+          const updatedLayers = dir.layers.map((layer) =>
+            layer.id === layerId ? data : layer,
+          );
+          if (dir.subdirectories) {
+            return {
+              ...dir,
+              layers: updatedLayers,
+              subdirectories: updateDirectoryRecursive(
+                dir.subdirectories,
+                layerId,
+                data,
+              ),
+            };
+          }
+
+          return {
+            ...dir,
+            layers: updatedLayers,
+          };
+        });
+      };
+      setDirectories((prevDirectories) =>
+        updateDirectoryRecursive(prevDirectories, layerId, data),
+      );
     } catch (error) {}
   };
 

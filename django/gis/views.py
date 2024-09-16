@@ -219,9 +219,17 @@ class DirectoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Directory.objects.filter(
-            user=self.request.user, parent__isnull=True
-        ).prefetch_related("layers")
+        return Directory.objects.filter(user=self.request.user).prefetch_related(
+            "layers", "subdirectories"
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().filter(parent__isnull=True).order_by("name")
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

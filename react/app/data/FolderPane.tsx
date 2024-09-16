@@ -1,31 +1,15 @@
-import { set } from 'ol/transform';
 import React, { useState } from 'react';
 import {
   FolderPlusIcon,
-  PlusIcon,
-  MinusIcon,
-  FolderIcon,
   ChevronDownIcon,
   UserGroupIcon,
   HomeIcon,
-  EllipsisVerticalIcon,
 } from '@heroicons/react/24/outline';
 import { LayerIcon } from './LayerIcon';
 import AddDirectoryModal from './AddDirectoryModal';
-import { on } from 'events';
-interface Layer {
-  id: string;
-  name: string;
-  directory: number;
-}
-
-interface Directory {
-  id: number;
-  name: string;
-  layers: Layer[];
-  subdirectories: Directory[];
-  parent?: string;
-}
+import { Layer, Directory } from './types';
+import DirectoryNode from './DirectoryNode';
+import MoveFolderModal from './MoveFolderModal';
 
 interface FolderPaneProps {
   layers: Layer[];
@@ -37,6 +21,7 @@ interface FolderPaneProps {
   addDirectory: (name: string, parent: number | null) => void;
   deleteDirectory: (id: number) => void;
   updateDirectory: (id: number, name: string, parent: number | null) => void;
+  moveDirectory: (id: number, parent: number | null) => void;
 }
 
 const FolderPane: React.FC<FolderPaneProps> = ({
@@ -49,6 +34,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   addDirectory,
   deleteDirectory,
   updateDirectory,
+  moveDirectory,
 }) => {
   const [selectedOption, setSelectedOption] = useState(
     <div className="flex items-center">
@@ -63,6 +49,9 @@ const FolderPane: React.FC<FolderPaneProps> = ({
     y: 0,
   });
   const [contextMenuDirectory, setContextMenuDirectory] = useState(null);
+  const [editingDirectory, setEditingDirectory] = useState(null);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [directoryToMove, setDirectoryToMove] = useState(null);
 
   const handleOptionClick = (option) => {
     console.log(option);
@@ -89,13 +78,22 @@ const FolderPane: React.FC<FolderPaneProps> = ({
     setContextMenuDirectory(null);
   };
 
-  const handleRename = () => {
-    // Implement rename functionality
+  const startEditing = (directory) => {
+    setEditingDirectory(directory);
     closeContextMenu();
   };
 
+  const handleRename = () => {
+    startEditing(contextMenuDirectory);
+  };
+
+  const doMoveDirectory = (newParentId) => {
+    moveDirectory(directoryToMove.id, directoryToMove.name, newParentId);
+  };
+
   const handleMove = () => {
-    // Implement move functionality
+    setShowMoveModal(true);
+    setDirectoryToMove(contextMenuDirectory);
     closeContextMenu();
   };
 
@@ -142,13 +140,18 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           <FolderPlusIcon className="h-5 w-5" />
         </button>
       </div>
-      <div className="pr-2">
+      <div className="pr-2 w-full">
         {directories &&
           directories.map((directory) => (
             <DirectoryNode
               key={directory.id}
               directory={directory}
               selectedLayer={selectedLayer}
+              editingDirectory={editingDirectory}
+              isEditingDirectory={
+                editingDirectory && editingDirectory.id === directory.id
+              }
+              setIsEditingDirectory={setEditingDirectory}
               handleSelection={handleSelection}
               addDirectory={addDirectory}
               deleteDirectory={deleteDirectory}
@@ -171,7 +174,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
               <span className="mr-2">
                 <LayerIcon fill="#000" width="20px" height="20px" />
               </span>
-              {layer.name}
+              <span className="truncate">{layer.name}</span>
             </div>
           ))}
       </div>
@@ -211,136 +214,12 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           </button>
         </div>
       )}
-    </div>
-  );
-};
-
-interface DirectoryNodeProps {
-  directory: Directory;
-  selectedLayer: Layer | null;
-  handleSelection: (layer: Layer) => void;
-  addDirectory: (name: string, parent: number | null) => void;
-  deleteDirectory: (id: number) => void;
-  updateDirectory: (id: number, name: string, parent: number | null) => void;
-  onContextMenu: (event: React.MouseEvent, directory: Directory) => void;
-}
-
-const DirectoryNode: React.FC<DirectoryNodeProps> = ({
-  directory,
-  selectedLayer,
-  handleSelection,
-  addDirectory,
-  deleteDirectory,
-  updateDirectory,
-  onContextMenu,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [newName, setNewName] = useState(directory.name);
-
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  const startEditing = () => {
-    setIsEditing(true);
-  };
-
-  const handleNameChange = (event) => {
-    setNewName(event.target.value);
-  };
-
-  const submitRename = async (event) => {
-    event.preventDefault();
-    try {
-      await api.put(`/api/directories/${directory.id}/`, { name: newName });
-      updateDirectory(directory.id, newName, directory.parent);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to rename directory:', error);
-    }
-  };
-
-  return (
-    <div className="ml-2 pl-2 mt-1">
-      <div className="flex items-center">
-        <div
-          className="mr-2 flex items-center cursor-pointer"
-          onClick={toggleExpand}
-        >
-          {isExpanded ? (
-            <MinusIcon className="h-4 w-4" />
-          ) : (
-            <PlusIcon className="h-4 w-4" />
-          )}
-        </div>
-        <div className="flex items-center justify-between w-full">
-          {isEditing ? (
-            <form onSubmit={submitRename} className="flex items-center w-full">
-              <input
-                type="text"
-                value={newName}
-                onChange={handleNameChange}
-                className="border rounded p-1 w-full"
-                autoFocus
-              />
-              <button type="submit" className="hidden">
-                Submit
-              </button>
-            </form>
-          ) : (
-            <div
-              className="flex items-center cursor-pointer"
-              onClick={toggleExpand}
-            >
-              <FolderIcon className="h-5 w-5 mr-2" />
-              {directory.name}
-            </div>
-          )}
-          <button
-            className="p-1 pl-0 pr-0 hover:bg-gray-100 rounded  focus:outline-none"
-            onClick={(event) => onContextMenu(event, directory)}
-          >
-            <EllipsisVerticalIcon className="h-4 w-5" />
-          </button>
-        </div>
-      </div>
-      {isExpanded && (
-        <div className="ml-2 border-l-2 border-gray-100">
-          {directory.subdirectories &&
-            directory.subdirectories.map((subdirectory) => (
-              <DirectoryNode
-                key={subdirectory.id}
-                directory={subdirectory}
-                selectedLayer={selectedLayer}
-                handleSelection={handleSelection}
-                addDirectory={addDirectory}
-                deleteDirectory={deleteDirectory}
-                updateDirectory={updateDirectory}
-                onContextMenu={onContextMenu}
-              />
-            ))}
-          <ul className="ml-2">
-            {directory.layers &&
-              directory.layers.map((layer) => (
-                <li
-                  key={layer.id}
-                  className={`pl-2 mt-1 flex items-center cursor-pointer rounded-md hover:bg-gray-100 ${selectedLayer && selectedLayer.id === layer.id ? 'bg-gray-100' : 'bg-white'}`}
-                  onClick={() => handleSelection(layer)}
-                  style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  <span className="mr-2">
-                    <LayerIcon fill="#000" width="20px" height="20px" />
-                  </span>
-                  {layer.name}
-                </li>
-              ))}
-          </ul>
-        </div>
+      {showMoveModal && (
+        <MoveFolderModal
+          directories={directories}
+          onClose={() => setShowMoveModal(false)}
+          onMove={doMoveDirectory}
+        />
       )}
     </div>
   );

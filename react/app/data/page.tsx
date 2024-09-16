@@ -8,6 +8,7 @@ import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import api from '../api';
 import FolderPane from './FolderPane';
 import { FolderMoveIcon } from './FolderMoveIcon';
+import { GripVerticalIcon } from './GripVerticalIcon';
 
 interface Layer {
   id: number;
@@ -39,6 +40,8 @@ const Page: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalFeatures, setTotalFeatures] = useState(0);
+  const [leftPaneWidth, setLeftPaneWidth] = useState(25);
+  const [isResizing, setIsResizing] = useState(false);
 
   const sortLayers = (layers: Layer[]): Layer[] => {
     return layers.sort((a, b) => a.name.localeCompare(b.name));
@@ -49,10 +52,8 @@ const Page: React.FC = () => {
       const responseData = response.data;
       const sortedLayers = sortLayers(responseData.layers);
       setLayers(sortedLayers);
-      console.log(responseData.layers);
       api.get('/gis/directories/').then((response) => {
         setDirectories(response.data);
-        console.log(response.data);
         const homeLayers = sortedLayers.filter((layer) => !layer.directory);
         setHomeLayers(homeLayers);
       });
@@ -106,39 +107,114 @@ const Page: React.FC = () => {
 
   const handleExport = () => {};
 
+  const walkTree = (directories, parentId, callback) => {
+    return directories.map((dir) => {
+      if (dir.id === Number(parentId)) {
+        return callback(dir);
+      }
+
+      if (dir.subdirectories) {
+        return {
+          ...dir,
+          subdirectories: walkTree(dir.subdirectories, parentId, callback),
+        };
+      }
+
+      return dir;
+    });
+  };
+
+  const removeDirectoryRecursive = (directories, id) => {
+    return directories
+      .filter((dir) => dir.id !== id)
+      .map((dir) => {
+        if (dir.subdirectories) {
+          return {
+            ...dir,
+            subdirectories: removeDirectoryRecursive(dir.subdirectories, id),
+          };
+        }
+        return dir;
+      });
+  };
+
   const addDirectory = (name: string, parent: number | null) => {
     api.post('/gis/directories/', { name, parent }).then((response) => {
-      setDirectories([...directories, response.data]);
+      const newDirectory = response.data;
+      setDirectories((prevDirectories) =>
+        parent === null
+          ? [...prevDirectories, newDirectory]
+          : walkTree(prevDirectories, parent, (dir) => ({
+              ...dir,
+              subdirectories: [...(dir.subdirectories || []), newDirectory],
+            })),
+      );
     });
   };
 
   const deleteDirectory = (id: number) => {
     api.delete(`/gis/directories/${id}/`).then(() => {
-      setDirectories(directories.filter((dir) => dir.id !== id));
+      setDirectories((prevDirectories) =>
+        removeDirectoryRecursive(prevDirectories, id),
+      );
     });
   };
 
   const updateDirectory = (id: number, name: string, parent: number | null) => {
     api.put(`/gis/directories/${id}/`, { name, parent }).then((response) => {
-      setDirectories(
-        directories.map((dir) =>
-          dir.id === id ? { ...dir, name, parent } : dir,
-        ),
-      );
+      const updatedDirectory = response.data;
+      setDirectories((prevDirectories) => {
+        // Remove the directory from its current location
+        const directoriesWithoutUpdated = removeDirectoryRecursive(
+          prevDirectories,
+          id,
+        );
+
+        // Add the directory to the new parent
+        return parent === null
+          ? [...directoriesWithoutUpdated, updatedDirectory]
+          : walkTree(directoriesWithoutUpdated, parent, (dir) => ({
+              ...dir,
+              subdirectories: [...(dir.subdirectories || []), updatedDirectory],
+            }));
+      });
     });
   };
 
-  const handleMoveFolder = () => {
-    console.log('Move folder');
+  const handleMoveFolder = (directory_id, directory_name, newParentId) => {
+    updateDirectory(directory_id, directory_name, newParentId);
+  };
+
+  const handleMouseDown = (e) => {
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (isResizing) {
+      const newWidth = (e.clientX / window.innerWidth) * 100;
+      setLeftPaneWidth(newWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <div className="flex flex-col h-screen" style={{ marginTop: -72 }}>
         {/* Content */}
-        <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 72 }}>
+        <div
+          className="flex flex-1 overflow-hidden"
+          style={{ paddingTop: 72 }}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
           {/* Left Pane */}
-          <div className="w-1/4 bg-white overflow-auto border-r h-full">
+          <div
+            className="bg-white overflow-auto h-full"
+            style={{ width: `${leftPaneWidth}%` }}
+          >
             <FolderPane
               layers={layers}
               homeLayers={homeLayers}
@@ -149,7 +225,23 @@ const Page: React.FC = () => {
               addDirectory={addDirectory}
               deleteDirectory={deleteDirectory}
               updateDirectory={updateDirectory}
+              moveDirectory={handleMoveFolder}
             />
+          </div>
+          {/* Resizable Divider */}
+          <div className="relative flex items-center" style={{ width: '2px' }}>
+            <div
+              className="bg-gray-300 cursor-col-resize"
+              style={{ width: '2px', height: '100%' }}
+              onMouseDown={handleMouseDown}
+            />
+            <div
+              className="absolute left-1/2 transform -translate-x-1/2 bg-white rounded-md p-1 pr-0 pl-0 r-col-resize border"
+              onMouseDown={handleMouseDown}
+              style={{ zIndex: 100 }}
+            >
+              <GripVerticalIcon />
+            </div>
           </div>
 
           {/* Right Pane */}
@@ -160,7 +252,7 @@ const Page: React.FC = () => {
                   className="flex justify-between items-center p-2 pr-4 border-b"
                   style={{ height: '59px' }}
                 >
-                  <div class="flex items-center">
+                  <div className="flex items-center">
                     <EditableName
                       key={selectedLayer.id}
                       initialName={selectedLayer.name}
@@ -168,9 +260,11 @@ const Page: React.FC = () => {
                       layers={layers}
                       setLayers={setLayers}
                       sortLayers={sortLayers}
+                      directories={directories}
+                      setDirectories={setDirectories}
                     ></EditableName>
                     <button
-                      onClick={handleMoveFolder}
+                      onClick={() => {}}
                       className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
                     >
                       <FolderMoveIcon width="24px" height="24px" />
