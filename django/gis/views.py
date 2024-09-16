@@ -16,12 +16,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from gis.models import Property, Feature, Project, ProjectLayer
+from gis.models import Property, Feature, Project, ProjectLayer, Directory
 from gis.serializers import (
     LayerSerializer,
     ProjectSerializer,
     ProjectLayerSerializer,
     FileUploadSerializer,
+    DirectorySerializer,
 )
 from gis.tasks import ingest_file_to_db_task
 from gis.permissions import IsOwner, IsProjectOwner
@@ -52,6 +53,7 @@ class FileUploadView(APIView):
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
             file = serializer.validated_data["file"]
+            directory_id = request.data.get("directory")
             logger.info("Uploading file to GCS")
 
             # Google Cloud Storage upload
@@ -66,7 +68,9 @@ class FileUploadView(APIView):
             logger.info(f"File uploaded to GCS: {gcs_path}")
 
             # Call async task to ingest file into DB
-            layer_id = ingest_file_to_db_task(gcs_path, file_name, request.user.email)
+            layer_id = ingest_file_to_db_task(
+                gcs_path, file.name, directory_id, request.user.email
+            )
 
             self.create_feature_view(layer_id)
 
@@ -207,3 +211,25 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ProjectLayer.objects.filter(project__owner=self.request.user)
+
+
+class DirectoryViewSet(viewsets.ModelViewSet):
+    queryset = Directory.objects.all()
+    serializer_class = DirectorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Directory.objects.filter(user=self.request.user).prefetch_related(
+            "layers", "subdirectories"
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().filter(parent__isnull=True).order_by("name")
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

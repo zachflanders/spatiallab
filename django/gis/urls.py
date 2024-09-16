@@ -6,11 +6,14 @@ from .views import (
     ProjectViewSet,
     ProjectLayerViewSet,
     FileUploadView,
+    DirectoryViewSet,
 )
 
 router = DefaultRouter()
 router.register(r"projects", ProjectViewSet, basename="project")
 router.register(r"project-layers", ProjectLayerViewSet, basename="project-layer")
+router.register(r"directories", DirectoryViewSet, basename="directory")
+
 
 urlpatterns = [
     path("upload/", FileUploadView.as_view(), name="upload"),

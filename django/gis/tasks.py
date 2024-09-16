@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 class FileIngestor:
 
-    def __init__(self, gcs_path, layer_name, user_email):
+    def __init__(self, gcs_path, layer_name, directory, user_email):
         self.gcs_path = gcs_path
         self.layer_name = layer_name
+        self.directory = directory
         self.user_email = user_email
         self.bucket_name, self.blob_name = self.parse_gcs_path()
 
@@ -108,7 +109,9 @@ class FileIngestor:
 
         user = User.objects.get(email=self.user_email)
         # Create or get the Layer instance
-        layer, created = Layer.objects.get_or_create(name=self.layer_name, user=user)
+        layer, created = Layer.objects.get_or_create(
+            name=self.layer_name, user=user, directory_id=self.directory
+        )
         # Create Feature instances
         feature_instances = [
             Feature(
@@ -162,7 +165,7 @@ class FileIngestor:
             raise ValueError(f"Unsupported geometry type: {geom_type}")
 
 
-def ingest_file_to_db_task(gcs_path, layer_name, user_email):
+def ingest_file_to_db_task(gcs_path, layer_name, directory, user_email):
     """Task to ingest a file into the specified database table."""
-    ingestor = FileIngestor(gcs_path, layer_name, user_email)
+    ingestor = FileIngestor(gcs_path, layer_name, directory, user_email)
     return ingestor.ingest_file_to_db()
