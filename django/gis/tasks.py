@@ -10,7 +10,7 @@ from google.cloud import storage
 from django.contrib.gis.geos import GEOSGeometry
 from pyproj import CRS, Transformer
 
-from gis.models import Layer, Feature, Property
+from gis.models import Layer, LayerFeature, LayerProperty, FeaturePropertyValue
 from accounts.models import User
 
 logger = logging.getLogger(__name__)
@@ -112,24 +112,43 @@ class FileIngestor:
         layer, created = Layer.objects.get_or_create(
             name=self.layer_name, user=user, directory_id=self.directory
         )
+        logger.info(self.layer_name)
+        logger.info(f"Layer created: {created}")
+
         # Create Feature instances
         feature_instances = [
-            Feature(
+            LayerFeature(
                 geometry=GEOSGeometry(json.dumps(feature["geometry"])),
                 layer=layer,
             )
             for feature in features
         ]
         # Bulk create Feature instances
-        Feature.objects.bulk_create(feature_instances)
+        LayerFeature.objects.bulk_create(feature_instances)
         # Create Property instances
+        unique_properties = set(
+            key for feature in features for key in feature["properties"].keys()
+        )
+        logger.info(unique_properties)
         properties = [
-            Property(key=key, value=value, feature=feature_instance)
-            for feature_instance, feature in zip(feature_instances, features)
+            LayerProperty(name=key, type="string", layer=layer)
+            for key in unique_properties
+        ]
+
+        # Bulk create Property instances
+        LayerProperty.objects.bulk_create(properties)
+
+        values = [
+            FeaturePropertyValue(
+                property=LayerProperty.objects.get(name=key, layer=layer),
+                feature=feature_instance,
+                value=value,
+            )
+            for feature, feature_instance in zip(features, feature_instances)
             for key, value in feature["properties"].items()
         ]
-        # Bulk create Property instances
-        Property.objects.bulk_create(properties)
+
+        FeaturePropertyValue.objects.bulk_create(values)
         return layer.id
 
     @staticmethod
