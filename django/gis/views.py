@@ -16,7 +16,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from gis.models import Property, Feature, Project, ProjectLayer, Directory
+from gis.models import (
+    LayerProperty,
+    LayerFeature,
+    Project,
+    ProjectLayer,
+    Directory,
+    FeaturePropertyValue,
+)
 from gis.serializers import (
     LayerSerializer,
     ProjectSerializer,
@@ -42,7 +49,7 @@ class FileUploadView(APIView):
                 f"""
                 CREATE OR REPLACE VIEW {view_name} AS
                 SELECT f.id, f.geometry, l.name AS layer_name
-                FROM gis_feature f
+                FROM gis_layerfeature f
                 JOIN gis_layer l ON f.layer_id = l.id
                 WHERE f.layer_id = %s
             """,
@@ -69,7 +76,10 @@ class FileUploadView(APIView):
 
             # Call async task to ingest file into DB
             layer_id = ingest_file_to_db_task(
-                gcs_path, file.name, directory_id, request.user.email
+                gcs_path=gcs_path,
+                layer_name=file_name,
+                directory=directory_id,
+                user_email=request.user.email,
             )
 
             self.create_feature_view(layer_id)
@@ -103,16 +113,15 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         layer = self.get_object()
-        layer_id = layer.id
 
         unique_keys = (
-            Property.objects.filter(feature__layer__id=layer_id)
-            .values_list("key", flat=True)
+            LayerProperty.objects.filter(layer=layer)
+            .values_list("name", flat=True)
             .distinct()
         )
-        extent = Feature.objects.filter(layer__id=layer_id).aggregate(
-            Extent("geometry")
-        )["geometry__extent"]
+        extent = LayerFeature.objects.filter(layer=layer).aggregate(Extent("geometry"))[
+            "geometry__extent"
+        ]
         if extent:
             minx = float(extent[0])
             maxx = float(extent[2])
@@ -141,10 +150,15 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         page = request.GET.get("page", 1)
         page_size = request.GET.get("page_size", 10)
-        features = Feature.objects.filter(layer__id=layer_id).prefetch_related(
-            "properties"
+        features = LayerFeature.objects.filter(layer=layer).prefetch_related(
+            "feature_values__property"
         )
         paginator = Paginator(features, page_size)
+        logger.info(layer)
+        logger.info(features[0])
+        logger.info(features[0].id)
+        logger.info(features[0].feature_values.all())
+        logger.info(FeaturePropertyValue.objects.filter(feature=features[0]))
 
         try:
             features_page = paginator.page(page)
@@ -157,15 +171,8 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
             {
                 "Feature ID": feature.id,
                 **{
-                    key: next(
-                        (
-                            prop.value
-                            for prop in feature.properties.all()
-                            if prop.key == key
-                        ),
-                        None,
-                    )
-                    for key in unique_keys
+                    value.property.name: value.value
+                    for value in feature.feature_values.all()
                 },
             }
             for feature in features_page
