@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { debounce } from 'lodash';
 import { Layer } from '../app/data/types';
 import api from '../app/api';
 import { set } from 'ol/transform';
@@ -42,10 +43,12 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
       });
   };
 
+  const debouncedFetchData = useCallback(debounce(fetchData, 300), [layer.id]);
+
   useEffect(() => {
     console.log('Fetching data...');
     setIsLoading(true);
-    fetchData(currentPage, pageSize);
+    debouncedFetchData(currentPage, pageSize);
   }, [currentPage, pageSize]);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
     } else {
       setIsLoading(true);
       setTotalPages('?');
-      fetchData(currentPage, pageSize);
+      debouncedFetchData(currentPage, pageSize);
     }
   }, [layer]);
 
