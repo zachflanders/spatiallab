@@ -7,6 +7,7 @@ from .views import (
     ProjectLayerViewSet,
     FileUploadView,
     DirectoryViewSet,
+    ExportLayerAsGeoJSON,
 )
 
 router = DefaultRouter()
@@ -19,5 +20,10 @@ urlpatterns = [
     path("upload/", FileUploadView.as_view(), name="upload"),
     path("layers/", LayerListView.as_view(), name="layer-list"),
     path("layer/<int:pk>/", LayerDetailView.as_view(), name="layer-detail"),
+    path(
+        "export/layer/<int:layer_id>/",
+        ExportLayerAsGeoJSON.as_view(),
+        name="export_layer_geojson",
+    ),
     path("", include(router.urls)),
 ]

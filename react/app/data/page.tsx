@@ -1,17 +1,12 @@
 'use client';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import GeoServerMap from '@/components/GeoServerMap';
-import LayerTable from '@/components/LayerTable';
-import EditableName from './EditableName';
-import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import api from '../api';
 import FolderPane from './FolderPane';
-import { FolderMoveIcon } from './FolderMoveIcon';
 import { GripVerticalIcon } from './GripVerticalIcon';
 import { Directory, Layer } from './types';
 import MoveFolderModal from './MoveFolderModal';
-import { set } from 'ol/transform';
+import LayerView from './LayerView';
 
 const Page: React.FC = () => {
   const searchParams = useSearchParams();
@@ -354,52 +349,19 @@ const Page: React.FC = () => {
           </div>
 
           {/* Right Pane */}
-          <div className="flex-1 bg-white overflow-auto">
+          <div className="flex-1 h-full bg-white overflow-auto">
             {selectedLayer && (
-              <div>
-                <div
-                  className="flex justify-between items-center p-2 pr-4 border-b"
-                  style={{ height: '59px' }}
-                >
-                  <div className="flex items-center">
-                    <EditableName
-                      key={selectedLayer.id}
-                      initialName={selectedLayer.name}
-                      layerId={Number(selectedLayer.id)}
-                      layers={homeLayers}
-                      setLayers={setHomeLayers}
-                      sortLayers={sortLayers}
-                      directories={directories}
-                      setDirectories={setDirectories}
-                    ></EditableName>
-                    <button
-                      onClick={() => setShowMoveModal(true)}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-                    >
-                      <FolderMoveIcon width="24px" height="24px" />
-                    </button>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleDelete}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={handleExport}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-                    >
-                      <ArrowDownTrayIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-                <GeoServerMap
-                  layer={Number(selectedLayer.id)}
-                  extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
-                />
-                <LayerTable headers={headers} data={data} />
-              </div>
+              <LayerView
+                selectedLayer={selectedLayer}
+                homeLayers={homeLayers}
+                setHomeLayers={setHomeLayers}
+                sortLayers={sortLayers}
+                directories={directories}
+                setDirectories={setDirectories}
+                handleDelete={handleDelete}
+                setShowMoveModal={setShowMoveModal}
+                extent={extent}
+              />
             )}
           </div>
         </div>

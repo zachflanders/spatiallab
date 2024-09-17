@@ -3,11 +3,11 @@ import logging
 import uuid
 from pathlib import Path
 
-import requests
 from django.conf import settings
 from django.db import connection
 from django.contrib.gis.db.models import Extent
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import JsonResponse, HttpResponse
 from google.cloud import storage
 from pyproj import Transformer
 from rest_framework import generics, viewsets
@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from gis.models import (
+    Layer,
     LayerProperty,
     LayerFeature,
     Project,
@@ -240,3 +241,47 @@ class DirectoryViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(parent__isnull=True).order_by("name")
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class ExportLayerAsGeoJSON(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, layer_id):
+        try:
+            # Retrieve the Layer and associated Features
+            layer = Layer.objects.get(id=layer_id, user=request.user)
+            features = LayerFeature.objects.filter(layer=layer).prefetch_related(
+                "feature_values__property"
+            )
+
+            # Serialize features to GeoJSON
+            geojson = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": json.loads(feature.geometry.geojson),
+                        "properties": {
+                            "id": feature.id,
+                            **{
+                                value.property.name: value.value
+                                for value in feature.feature_values.all()
+                            },
+                        },
+                    }
+                    for feature in features
+                ],
+            }
+
+            filename = Path(layer.name).stem + ".geojson"
+
+            # Create HTTP response with GeoJSON content
+            response = Response(geojson, content_type="application/json")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return response
+
+        except Layer.DoesNotExist:
+            return JsonResponse(
+                {"error": "Layer not found or access denied."},
+                status=status.HTTP_404_NOT_FOUND,
+            )

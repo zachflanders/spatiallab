@@ -72,7 +72,7 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
   }, [extent]);
 
   return (
-    <div style={{ height: 300 }}>
+    <div className="w-full h-full">
       <div ref={mapRef} className="w-full h-full bg-gray-200"></div>
     </div>
   );
