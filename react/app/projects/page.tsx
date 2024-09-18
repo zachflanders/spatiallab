@@ -1,18 +1,31 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import api from '../api';
-
-const AddProject: React.FC = () => {
+import AddProjectForm from './AddProjectForm';
+import { set } from 'ol/transform';
+const Page: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     api.get('/gis/projects/').then((response) => {
       setProjects(response.data);
+      setIsLoading(false);
     });
   }, []);
 
@@ -35,68 +48,56 @@ const AddProject: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Add New Project</h2>
-      {error && <div className="mb-4 text-red-500">{error}</div>}
-      {success && <div className="mb-4 text-green-500">{success}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="name"
-          >
-            Project Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="description"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="flex items-center justify-between">
+    <div className="flex p-3">
+      <div className="container mx-auto">
+        <div className="justify-between flex items-center mb-4">
+          <h2 className="text-xl text-bold">Projects</h2>
           <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded"
+            onClick={handleOpenModal}
           >
             Add Project
           </button>
         </div>
-      </form>
-      {projects.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Projects</h2>
+        <hr />
+        {isLoading && <p className="mt-4">Loading...</p>}
+
+        {projects.length > 0 && (
           <ul>
             {projects.map((project) => (
-              <li key={project.id} className="mb-2">
-                <Link className="font-bold" href={`/project/${project.id}`}>
-                  {project.name}
+              <li
+                key={project.id}
+                className="py-2 border-b flex justify-between items-center"
+              >
+                <div>
+                  <Link className="font-bold" href={`/project/${project.id}`}>
+                    {project.name}
+                  </Link>
+                  <p>{project.description}</p>
+                </div>
+                <Link href={`/project/${project.id}`}>
+                  <button className="bg-grey-100 hover:bg-grey-200  py-2 px-3 rounded border flex items-center">
+                    View Project <ChevronRightIcon className="ml-1 h-4 w-4" />
+                  </button>
                 </Link>
-                <p>{project.description}</p>
               </li>
             ))}
           </ul>
+        )}
+      </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <AddProjectForm
+              projects={projects}
+              setProjects={setProjects}
+              onClose={handleCloseModal}
+            />
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default AddProject;
+export default Page;

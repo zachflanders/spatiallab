@@ -26,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const handleLogout = async () => {
     setIsLoading(true);
     logout();
+    router.push('/');
     const isAuth = await checkAuth();
     setIsAuthenticated(isAuth ? true : false);
     setIsLoading(false);
@@ -113,15 +114,6 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 type="button"
                 className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
                 onClick={() => {
-                  router.push('/projects');
-                }}
-              >
-                Projects
-              </Button>
-              <Button
-                type="button"
-                className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
-                onClick={() => {
                   router.push('/data');
                 }}
               >
@@ -131,10 +123,10 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 type="button"
                 className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
                 onClick={() => {
-                  router.push('/upload');
+                  router.push('/projects');
                 }}
               >
-                Upload
+                Projects
               </Button>
               <Button
                 type="button"
@@ -190,37 +182,72 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                 ></path>
               </svg>
             </button>
-            <Button
-              type="button"
-              className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
-              onClick={() => {
-                router.push('/pricing');
-                toggleSidebar();
-              }}
-            >
-              Pricing
-            </Button>
-            <span className="border-t border-gray-400 my-2"></span>
-            <Button
-              type="button"
-              className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
-              onClick={() => {
-                router.push('/login');
-                toggleSidebar();
-              }}
-            >
-              Login
-            </Button>
-            <Button
-              type="button"
-              className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
-              onClick={() => {
-                router.push('/signup');
-                toggleSidebar();
-              }}
-            >
-              Signup
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={() => {
+                    router.push('/data');
+                    toggleSidebar();
+                  }}
+                >
+                  Data
+                </Button>
+                <span className="border-t border-gray-400 my-2"></span>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={() => {
+                    router.push('/projects');
+                    toggleSidebar();
+                  }}
+                >
+                  Projects
+                </Button>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={handleLogout}
+                >
+                  logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={() => {
+                    router.push('/pricing');
+                    toggleSidebar();
+                  }}
+                >
+                  Pricing
+                </Button>
+                <span className="border-t border-gray-400 my-2"></span>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={() => {
+                    router.push('/login');
+                    toggleSidebar();
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  type="button"
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold w-full text-left"
+                  onClick={() => {
+                    router.push('/signup');
+                    toggleSidebar();
+                  }}
+                >
+                  Signup
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

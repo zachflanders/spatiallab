@@ -6,7 +6,11 @@ import { getCookie } from '../app/accounts/auth';
 import api from '../app/api';
 import { Directory } from '../app/data/types';
 
-const FileUploadForm: React.FC = () => {
+interface FileUploadFormProps {
+  onClose: () => void;
+}
+
+const FileUploadForm: React.FC<FileUploadFormProps> = ({ onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const [directory, setDirectory] = useState<number | null>(null);
   const [directories, setDirectories] = useState([]);
@@ -45,6 +49,7 @@ const FileUploadForm: React.FC = () => {
         },
       });
       router.push(`/data?selectedLayer=${response.data.layer_id}`);
+      onClose();
     } catch (error) {
       console.error('Error uploading file:', error);
       setUploading(false);
@@ -65,6 +70,7 @@ const FileUploadForm: React.FC = () => {
           value={`${directory}`}
           onChange={(e) => setDirectory(parseInt(e.target.value))}
           disabled={uploading}
+          className="border p-2 w-full rounded bg-white"
         >
           <option value="">Select Directory</option>
           {directories.map((directory: Directory) => (
@@ -74,10 +80,19 @@ const FileUploadForm: React.FC = () => {
           ))}
         </select>
       </div>
+      <div className="flex">
+        <button onClick={onClose} className="mr-2 p-2 bg-gray-300 rounded">
+          Cancel
+        </button>
 
-      <Button type="submit" disabled={uploading}>
-        Upload
-      </Button>
+        <button
+          type="submit"
+          disabled={uploading}
+          className="p-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Upload
+        </button>
+      </div>
       {uploading && <span>Uploading...</span>}
     </form>
   );
