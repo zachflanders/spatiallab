@@ -1,5 +1,5 @@
 'use client';
-import { use, useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../api';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';

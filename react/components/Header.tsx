@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -7,21 +7,19 @@ import Button from '@/components/Button';
 import { checkAuth, logout, getCookie } from '@/app/accounts/auth';
 import { useAuth } from '../app/AuthContext'; // Adjust the import path as necessary
 import Image from 'next/image';
-
+import { UserIcon } from '@heroicons/react/24/outline';
 interface HeaderProps {
   className?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ className }) => {
   const router = useRouter();
-  const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
+  const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading, user } =
     useAuth();
-  const [csrfToken, setCsrfToken] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    setCsrfToken(getCookie('csrftoken') || '');
-  }, [setCsrfToken]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const userButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -34,6 +32,54 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      menuRef.current &&
+      !menuRef.current.contains(event.target as Node) &&
+      userButtonRef.current &&
+      !userButtonRef.current.contains(event.target as Node)
+    ) {
+      setMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const Menu = () => {
+    console.log(user);
+    return (
+      <div
+        className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+        ref={menuRef}
+      >
+        <div className="flex flex-col">
+          <div className="p-4 border-b">{user && user.email}</div>
+          {user && !user.is_verified && (
+            <div
+              className="px-4 py-2 text-sm border-b bg-yellow-100 hover:bg-yellow-200 cursor-pointer"
+              onClick={() => {
+                router.push('/verify');
+              }}
+            >
+              Please verify your email.
+            </div>
+          )}
+          <div
+            onClick={handleLogout}
+            className="p-4 hover:bg-gray-100 cursor-pointer"
+          >
+            Logout
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -128,13 +174,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               >
                 Projects
               </Button>
-              <Button
-                type="button"
-                onClick={handleLogout}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
-              >
-                Logout
-              </Button>
+              <div className="relative inline-block text-left">
+                <button
+                  ref={userButtonRef}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(!menuOpen);
+                  }}
+                  className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold"
+                >
+                  <UserIcon className="h-5 w-5" />
+                </button>
+                {menuOpen && <Menu />}
+              </div>
             </div>
             <div className="md:hidden">
               <button

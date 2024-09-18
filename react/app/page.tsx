@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import SignupForm from './accounts/SignupForm';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
@@ -27,6 +27,8 @@ export default function Home() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [signupError, setSignupError] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -35,11 +37,21 @@ export default function Home() {
     if (token) {
       setHasToken(true);
     }
-    // if (!isLoading && !isAuthenticated) {
-    //   setHasToken(false);
-    // }
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        setShowForm(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [formRef]);
 
   const handleSuccess = () => {
     setIsAuthenticated(true);
@@ -47,11 +59,6 @@ export default function Home() {
   };
   const handleInputFocus = () => {
     setShowForm(true);
-  };
-  const handleInputBlur = () => {
-    if (!email) {
-      setShowForm(false);
-    }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,20 +86,11 @@ export default function Home() {
     }
     try {
       const csrfToken = getCookie('csrftoken');
-      const response = await api.post(
-        '/accounts/waitlist/',
-        {
-          email: email,
-          role: role,
-          subscribe: subscribe,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken || '',
-          },
-        },
-      );
+      const response = await api.post('/accounts/waitlist/', {
+        email: email,
+        role: role,
+        subscribe: subscribe,
+      });
       if (response.status === 201) {
         setSignupSuccess(true);
       } else {
@@ -130,11 +128,10 @@ export default function Home() {
                   placeholder="your@email.com"
                   onFocus={handleInputFocus}
                   onChange={handleEmailChange}
-                  onBlur={handleInputBlur}
                   value={email}
                 />
                 {showForm && (
-                  <div className="mt-4">
+                  <div className="mt-4" ref={formRef}>
                     <form onSubmit={handleSubmit}>
                       <div className="mb-4">
                         <label htmlFor="role" className="text-gray-700">
@@ -144,7 +141,7 @@ export default function Home() {
                           id="role"
                           value={role}
                           onChange={handleRoleChange}
-                          className="mt-2 block w-full pl-3 pr-10 py-3 text-lg border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                          className="mt-2 text-lg bg-white block w-full pl-3 pr-10 py-3 text-lg border focus:outline-none focus:ring-indigo-500 focus:border-indigo-500  rounded-md"
                         >
                           <option value="">Select an industry</option>
                           <option value="local-government">
@@ -292,9 +289,9 @@ export default function Home() {
         </div>
       ) : checkedToken && isAuthenticated ? (
         <Suspense>
-          <div className="p-3 pt-8 flex items-center space-x-8 w-full ">
+          <div className="p-3 pt-8 container mx-auto flex felx-col md:flex-row items-center space-x-8 w-full ">
             <div
-              className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+              className="p-8 bg-white border rounded-lg cursor-pointer hover:bg-gray-100 transition"
               onClick={() => {
                 router.push('/data');
               }}
@@ -305,7 +302,7 @@ export default function Home() {
               </p>
             </div>
             <div
-              className="p-8 bg-white border rounded-lg shadow-lg cursor-pointer hover:bg-gray-100 transition"
+              className="p-8 bg-white border rounded-lg cursor-pointer hover:bg-gray-100 transition"
               onClick={() => {
                 router.push('/projects');
               }}

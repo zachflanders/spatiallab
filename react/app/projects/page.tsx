@@ -4,7 +4,6 @@ import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import api from '../api';
 import AddProjectForm from './AddProjectForm';
-import { set } from 'ol/transform';
 const Page: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
