@@ -30,14 +30,12 @@ const AddProjectForm: React.FC<AddProjectProps> = ({
         name,
         description,
       });
-      console.log(projects, response.data);
       setProjects([...projects, response.data]);
       setSuccess('Project added successfully!');
       setName('');
       setDescription('');
       onClose();
     } catch (err) {
-      console.log(err);
       setError('Failed to add project. Please try again.');
     }
   };

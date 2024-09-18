@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -26,12 +27,16 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+@csrf_exempt
 def send_activation_email(user, request):
     current_site = get_current_site(request)
     mail_subject = "Activate your SpatialLab account"
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = custom_token_generator.make_token(user)
-    activation_url = f"http://{current_site.domain}/verify?uid={uid}&token={token}"
+    protocol = "https" if request.is_secure() else "http"
+    activation_url = (
+        f"{protocol}://{current_site.domain}/verify?uid={uid}&token={token}"
+    )
     message = render_to_string(
         "acc_activate_email.html",
         {
@@ -42,22 +47,23 @@ def send_activation_email(user, request):
     send_mail(
         mail_subject,
         message,
-        "adming@spatiallab.app",
+        "admin@spatiallab.app",
         [user.email],
         html_message=message,
     )
 
 
+@csrf_exempt
 def signup_view(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
+            return JsonResponse({"detail": "Invalid JSON"}, status=400)
         logger.info("Data: %s", data)
 
         if data.get("code") != settings.EARLY_ACCESS_CODE:
-            return JsonResponse({"error": "Invalid code"}, status=400)
+            return JsonResponse({"detail": "Invalid code"}, status=400)
         logger.info("Code is valid")
 
         form = UserCreationForm(
@@ -71,12 +77,12 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             send_activation_email(user, request)
-            login(request, user)
             return JsonResponse(
                 {
                     "success": True,
                     "message": "Please confirm your email address to complete the registration.",
-                }
+                },
+                status=201,
             )
         return JsonResponse({"errors": form.errors}, status=400)
 
@@ -95,6 +101,7 @@ def activate_view(request, uid, token):
     return JsonResponse({"error": "Invalid activation link"}, status=400)
 
 
+@csrf_exempt
 def resend_activation_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -156,6 +163,7 @@ class IsAuthenticatedJWTView(APIView):
                     "email": user.email,
                     "first_name": user.first_name,
                     "last_name": user.last_name,
+                    "is_verified": user.is_verified,
                 },
             },
             status=status.HTTP_200_OK,
@@ -175,3 +183,77 @@ class WaitlistCreateView(APIView):
             send_mail(subject, message, from_email, recipient_list)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(["POST"])
+def password_reset_request_view(request):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    email = data.get("email")
+    if not email:
+        return JsonResponse({"detail": "Email is required"}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"detail": "User with this email does not exist"}, status=400
+        )
+
+    token = custom_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    current_site = get_current_site(request)
+    protocol = "https" if request.is_secure() else "http"
+    reset_url = f"{protocol}://{current_site.domain}/reset-password/{uid}/{token}"
+
+    mail_subject = "Reset your password"
+    message = render_to_string(
+        "password_reset_email.html",
+        {
+            "user": user,
+            "reset_url": reset_url,
+        },
+    )
+    send_mail(
+        mail_subject,
+        message,
+        "admin@spatiallab.app",
+        [user.email],
+        html_message=message,
+    )
+
+    return JsonResponse({"detail": "Password reset email sent"}, status=200)
+
+
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+
+
+@csrf_exempt
+@api_view(["POST"])
+def password_reset_confirm_view(request, uid, token):
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    password = data.get("password")
+    if not password:
+        return JsonResponse({"detail": "Password is required"}, status=400)
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uid))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        return JsonResponse({"detail": "Invalid token or user ID"}, status=400)
+
+    if custom_token_generator.check_token(user, token):
+        user.set_password(password)
+        user.save()
+        return JsonResponse({"detail": "Password has been reset"}, status=200)
+    else:
+        return JsonResponse({"detail": "Invalid token"}, status=400)

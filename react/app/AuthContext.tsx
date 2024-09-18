@@ -8,6 +8,7 @@ interface AuthContextProps {
   setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  user: any;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -17,10 +18,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<any>(null);
 
   const fetchAuthStatus = async () => {
     const authStatus = await checkAuth();
     setIsAuthenticated(authStatus ? true : false);
+    setUser(authStatus.user);
     setIsLoading(false);
   };
 
@@ -30,7 +33,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, setIsAuthenticated, isLoading, setIsLoading }}
+      value={{
+        isAuthenticated,
+        setIsAuthenticated,
+        isLoading,
+        setIsLoading,
+        user,
+      }}
     >
       {children}
     </AuthContext.Provider>

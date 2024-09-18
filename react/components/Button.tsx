@@ -23,7 +23,7 @@ const Button: React.FC<ButtonProps> = ({
           ? `${className} ${disabled ? 'bg-gray-400 cursor-not-allowed' : ''}`
           : `w-full py-2 px-4 rounded-md focus:outline-none focus:ring-2 ${
               disabled
-                ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                ? 'bg-blue-300 text-white cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500'
             }`
       }

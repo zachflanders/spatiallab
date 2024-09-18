@@ -37,8 +37,6 @@ const LayerView: React.FC<Props> = ({
   const containerRef = useRef(null);
 
   useEffect(() => {
-    console.log('window.innerHeight', window.innerHeight);
-    console.log((window.innerHeight - (59 + 73)) / 2);
     const handleResize = () => {
       setHeight((window.innerHeight - (59 + 73)) / 2);
     };
@@ -68,7 +66,6 @@ const LayerView: React.FC<Props> = ({
   };
 
   const handleExport = () => {
-    console.log('Exporting layer:', selectedLayer);
     api
       .get(`/gis/export/layer/${selectedLayer.id}/`, { responseType: 'blob' })
       .then((response) => {

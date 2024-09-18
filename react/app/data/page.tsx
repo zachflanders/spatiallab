@@ -66,7 +66,6 @@ const Page: React.FC = () => {
         params: { page, pageSize: pageSize },
       })
       .then((response) => {
-        console.log(response.data);
         const responseData = response.data;
         setHeaders(['Feature ID', ...responseData.headers]);
         setData(responseData.data);
@@ -300,7 +299,6 @@ const Page: React.FC = () => {
         setSelectedLayer(movedLayer);
       });
 
-    console.log('Move layer to:', newParentId);
     setShowMoveModal(false);
   };
 
