@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
 import { Layer } from '../app/data/types';
 import api from '../app/api';
-import { set } from 'ol/transform';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export interface FeatureData {
@@ -31,7 +30,6 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
         params: { page: page, page_size: pageSize },
       })
       .then((response) => {
-        console.log(response.data);
         const responseData = response.data;
         setHeaders(['Feature ID', ...responseData.headers]);
         setData(responseData.data);
@@ -46,13 +44,11 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
   const debouncedFetchData = useCallback(debounce(fetchData, 300), [layer.id]);
 
   useEffect(() => {
-    console.log('Fetching data...');
     setIsLoading(true);
     debouncedFetchData(currentPage, pageSize);
   }, [currentPage, pageSize]);
 
   useEffect(() => {
-    console.log('Layer changed...');
     if (currentPage !== 1) {
       setTotalPages('?');
       setCurrentPage(1);
@@ -70,7 +66,7 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
+    if (typeof totalPages === 'number' && currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };

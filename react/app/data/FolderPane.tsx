@@ -4,12 +4,14 @@ import {
   ChevronDownIcon,
   UserGroupIcon,
   HomeIcon,
+  CloudArrowUpIcon,
 } from '@heroicons/react/24/outline';
 import { LayerIcon } from './LayerIcon';
 import AddDirectoryModal from './AddDirectoryModal';
 import { Layer, Directory } from './types';
 import DirectoryNode from './DirectoryNode';
 import MoveFolderModal from './MoveFolderModal';
+import FileUploadForm from '@/components/FileUploadForm';
 
 interface FolderPaneProps {
   layers: Layer[];
@@ -47,6 +49,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   );
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({
     x: 0,
@@ -70,6 +73,10 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   };
   const openModal = () => {
     setIsModalOpen(true);
+  };
+
+  const openUploadModal = () => {
+    setUploadModalOpen(true);
   };
 
   const closeModal = () => {
@@ -151,12 +158,20 @@ const FolderPane: React.FC<FolderPaneProps> = ({
             </div>
           )}
         </div>
-        <button
-          className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-          onClick={openModal}
-        >
-          <FolderPlusIcon className="h-5 w-5" />
-        </button>
+        <div className="flex items-center space-x-1">
+          <button
+            className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+            onClick={openUploadModal}
+          >
+            <CloudArrowUpIcon className="h-5 w-5" />
+          </button>
+          <button
+            className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+            onClick={openModal}
+          >
+            <FolderPlusIcon className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       <div className="pr-2 w-full">
         {directories &&
@@ -249,6 +264,13 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           onClose={() => setShowMoveModal(false)}
           onMove={doMoveDirectory}
         />
+      )}
+      {uploadModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="shadow-lg">
+            <FileUploadForm onClose={() => setUploadModalOpen(false)} />
+          </div>
+        </div>
       )}
     </div>
   );

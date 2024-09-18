@@ -12,6 +12,7 @@ export const checkAuth = async () => {
 export const logout = async () => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
+  window.location.href = '/';
 };
 
 export function getCookie(name: string) {

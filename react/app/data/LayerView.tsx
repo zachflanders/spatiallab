@@ -19,7 +19,7 @@ interface Props {
   setDirectories: React.Dispatch<React.SetStateAction<Directory[]>>;
   handleDelete: () => void;
   setShowMoveModal: React.Dispatch<React.SetStateAction<boolean>>;
-  extent: number[];
+  extent: [] | [number, number, number, number];
 }
 
 const LayerView: React.FC<Props> = ({
@@ -104,7 +104,7 @@ const LayerView: React.FC<Props> = ({
           <EditableName
             key={selectedLayer.id}
             initialName={selectedLayer.name}
-            layerId={Number(selectedLayer.id)}
+            layerId={selectedLayer.id}
             layers={homeLayers}
             setLayers={setHomeLayers}
             sortLayers={sortLayers}
@@ -118,7 +118,7 @@ const LayerView: React.FC<Props> = ({
             <FolderMoveIcon width="24px" height="24px" />
           </button>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-1">
           <button
             onClick={handleExport}
             className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"

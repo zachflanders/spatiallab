@@ -21,6 +21,9 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
   const vectorTileLayerRef = useRef<VectorTileLayer | null>(null);
 
   useEffect(() => {
+    fetch(
+      `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/`,
+    );
     if (mapRef.current) {
       const vectorTileLayer = new VectorTileLayer({
         source: new VectorTileSource({
