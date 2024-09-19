@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef } from 'react';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { checkAuth, logout, getCookie } from '@/app/accounts/auth';
@@ -14,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ className }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading, user } =
     useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -83,7 +84,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   };
 
   return (
-    <header className={`${className} p-4 border-b`} style={{ zIndex: 2 }}>
+    <header className={`${className} p-4 border-b relative z-10`}>
       <div
         className="flex justify-between items-center"
         style={{ minHeight: 40 }}
@@ -158,7 +159,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
             <div className="hidden md:flex space-x-4 items-center">
               <Button
                 type="button"
-                className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
+                className={`py-2 px-4 relative rounded  hover:bg-gray-100 text-bold mr-1${
+                  pathname.includes('/data') ? ' bg-gray-100' : ''
+                }`}
                 onClick={() => {
                   router.push('/data');
                 }}
@@ -167,7 +170,9 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               </Button>
               <Button
                 type="button"
-                className="py-2 px-4 rounded bg-black bg-opacity-0 hover:bg-opacity-5 text-bold mr-1"
+                className={`py-2 px-4 rounded hover:bg-gray-100 text-bold mr-1${
+                  pathname.includes('/projects') ? ' bg-gray-100' : ''
+                }`}
                 onClick={() => {
                   router.push('/projects');
                 }}

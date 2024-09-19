@@ -1,10 +1,11 @@
 import json
 import logging
 import uuid
+from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
-from django.db import connection
+from django.core.cache import cache
 from django.contrib.gis.db.models import Extent
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, HttpResponse
@@ -42,21 +43,6 @@ logger = logging.getLogger(__name__)
 class FileUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @staticmethod
-    def create_feature_view(layer_id) -> None:
-        view_name = f"layer_{layer_id}_features"
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""
-                CREATE OR REPLACE VIEW {view_name} AS
-                SELECT f.id, f.geometry, l.name AS layer_name
-                FROM gis_layerfeature f
-                JOIN gis_layer l ON f.layer_id = l.id
-                WHERE f.layer_id = %s
-            """,
-                [layer_id],
-            )
-
     def post(self, request, *args, **kwargs):
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
@@ -90,6 +76,23 @@ class FileUploadView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GenerateSignedUrlView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        client = storage.Client(credentials=settings.GCS_CREDENTIALS)
+        bucket = client.bucket(settings.GCS_BUCKET_NAME)
+        file_name = f"{uuid.uuid4()}.{request.data['extension']}"
+        blob = bucket.blob(file_name)
+        signed_url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(minutes=15),
+            method="PUT",
+            content_type=request.data.get("content_type"),
+        )
+        return Response({"signed_url": signed_url, "file_name": file_name})
 
 
 class LayerListView(generics.ListAPIView):
@@ -285,3 +288,36 @@ class ExportLayerAsGeoJSON(APIView):
                 {"error": "Layer not found or access denied."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+class StartIngestTaskView(APIView):
+    def post(self, request, *args, **kwargs):
+        file_name = request.data.get("file_name")
+        layer_name = request.data.get("layer_name")
+        directory = request.data.get("directory")
+        user_email = request.user.email
+        logger.info(f"Starting ingest task for {file_name}")
+        logger.info(f"Layer name: {layer_name}")
+        logger.info(f"Directory: {directory}")
+        logger.info(f"User email: {user_email}")
+
+        if not file_name or not layer_name:
+            return Response(
+                {"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Trigger the Celery task
+        task = ingest_file_to_db_task.delay(
+            file_name, layer_name, directory, user_email
+        )
+
+        return Response(
+            {"task_id": task.id, "message": "Task started successfully"},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class CheckTaskStatusView(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        status_data = cache.get(task_id, {"status": "unknown"})
+        return Response(status_data)

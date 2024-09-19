@@ -32,6 +32,13 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
         }),
       });
 
+      const osmLayer = new TileLayer({
+        source: new XYZ({
+          url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous',
+        }),
+      });
+
       const map = new Map({
         target: mapRef.current,
         view: new View({
@@ -40,11 +47,7 @@ const GeoServerMap: React.FC<MapProps> = ({ layer, extent }) => {
         }),
         layers: [
           // Base layer (optional, can use OSM or other base layers)
-          new TileLayer({
-            source: new XYZ({
-              url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            }),
-          }),
+          osmLayer,
           vectorTileLayer,
         ],
       });

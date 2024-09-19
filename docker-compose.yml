@@ -4,14 +4,14 @@ services:
       context: ./django
       dockerfile: Dockerfile
     container_name: django
-    command: ["poetry", "run", "gunicorn", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8080"]
+    command: ["poetry", "run", "gunicorn", "--timeout", "600", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8080"]
     volumes:
       - ./django:/app
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=spatiallab.settings
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/spatiallab
-      - CELERY_BROKER_URL=pyamqp://rabbitmq
+      - CELERY_BROKER_URL=pyamqp://user:password@rabbitmq:5672//
     expose:
       - "8080"
     depends_on:
@@ -63,7 +63,8 @@ services:
       RABBITMQ_DEFAULT_PASS: password
 
   celery:
-    image: celery:latest
+    build:
+      context: ./django
     container_name: celery
     command: ["celery", "-A", "spatiallab", "worker", "--loglevel=info"]
     volumes:
@@ -71,6 +72,8 @@ services:
     depends_on:
       - django
       - rabbitmq
+    environment:
+       - CELERY_BROKER_URL=pyamqp://user:password@rabbitmq:5672//
 
   pg_tileserv:
     build: ./pg_tileserv

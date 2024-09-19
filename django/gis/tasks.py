@@ -7,7 +7,11 @@ from pathlib import Path
 import fiona
 from celery import shared_task
 from google.cloud import storage
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.cache import cache
+from django.db import connection, close_old_connections
+
 from pyproj import CRS, Transformer
 
 from gis.models import Layer, LayerFeature, LayerProperty, FeaturePropertyValue
@@ -184,7 +188,51 @@ class FileIngestor:
             raise ValueError(f"Unsupported geometry type: {geom_type}")
 
 
-def ingest_file_to_db_task(gcs_path, layer_name, directory, user_email):
+def create_feature_view(layer_id) -> None:
+    view_name = f"layer_{layer_id}_features"
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            CREATE OR REPLACE VIEW {view_name} AS
+            SELECT f.id, f.geometry, l.name AS layer_name
+            FROM gis_layerfeature f
+            JOIN gis_layer l ON f.layer_id = l.id
+            WHERE f.layer_id = %s
+        """,
+            [layer_id],
+        )
+    close_old_connections()
+
+
+@shared_task(bind=True)
+def ingest_file_to_db_task(self, file_name, layer_name, directory, user_email):
     """Task to ingest a file into the specified database table."""
-    ingestor = FileIngestor(gcs_path, layer_name, directory, user_email)
-    return ingestor.ingest_file_to_db()
+    cache.set(self.request.id, {"status": "processing", "progress": 0})
+
+    try:
+        # Initialize the file ingestor
+        ingestor = FileIngestor(
+            f"gs://{settings.GCS_BUCKET_NAME}/{file_name}",
+            layer_name,
+            directory,
+            user_email,
+        )
+
+        # Process the file and get the layer ID
+        layer_id = ingestor.ingest_file_to_db()
+        create_feature_view(layer_id)
+
+        # Set the task progress to 100% and mark it as completed
+        cache.set(
+            self.request.id,
+            {"status": "completed", "layer_id": layer_id, "progress": 100},
+        )
+
+    except Exception as e:
+        # Handle errors by marking the task as failed
+        cache.set(self.request.id, {"status": "error", "error": str(e)})
+        raise e
+    finally:
+        close_old_connections()
+
+    return layer_id

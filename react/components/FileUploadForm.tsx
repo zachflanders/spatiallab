@@ -35,21 +35,48 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({ onClose }) => {
       return;
     }
     setUploading(true);
-
-    const formData = new FormData();
-    formData.append('file', file);
-    if (directory) {
-      formData.append('directory', directory.toString());
-    }
-
     try {
-      const response = await api.post('/gis/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const body = {
+        content_type: file.type,
+        extension: file.name.split('.').pop(),
+      };
+      console.log(body);
+      const response = await api.post('/gis/generate-signed-url/', body);
+      console.log('response', response);
+      const { signed_url, file_name } = await response.data;
+
+      await fetch(signed_url, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
       });
-      router.push(`/data?selectedLayer=${response.data.layer_id}`);
-      onClose();
+      const taskResponse = await api.post('/gis/start-ingest-task/', {
+        file_name: file_name,
+        layer_name: file.name,
+        directory_id: directory,
+      });
+      const { task_id } = await taskResponse.data;
+      let status = 'processing';
+      while (status === 'processing') {
+        const statusResponse = await api.get(
+          `/gis/check-task-status/${task_id}/`,
+        );
+        const statusData = await statusResponse.data;
+        status = statusData.status;
+
+        if (status === 'completed') {
+          console.log('Ingest completed!', statusData);
+          break;
+        } else if (status === 'error') {
+          console.error('Error processing file:', statusData.error);
+          break;
+        }
+
+        // Update progress indicator on the UI
+        console.log('Progress:', statusData.progress);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        onClose();
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
       setUploading(false);

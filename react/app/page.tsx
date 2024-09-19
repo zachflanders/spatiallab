@@ -14,6 +14,7 @@ import {
   Cog8ToothIcon,
 } from '@heroicons/react/24/outline';
 import { set } from 'ol/transform';
+import Image from 'next/image';
 
 export default function Home() {
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
@@ -100,7 +101,7 @@ export default function Home() {
   };
 
   return (
-    <main className="bg-transparent">
+    <main className="bg-transparent overflow-x-hidden">
       {!hasToken && checkedToken ? (
         <div>
           <div className="space-y-24 py-24 mb-0 p-4">
@@ -239,13 +240,29 @@ export default function Home() {
                   your geospatial data effortlessly accross your entire team.
                 </p>
               </div>
-              <div className="flex justify-center">
-                <div
+              <div className="relative flex items-center">
+                <img
+                  src="/sidebar.png"
+                  alt="Data in the cloud"
+                  className="border shadow-lg rounded-lg h-96 z-10"
+                />
+                <img
+                  src="/datamap.png"
+                  alt="Data in the cloud"
+                  className="border rounded-lg shadow-lg object-cover"
+                  style={{
+                    height: 500,
+                    width: 900,
+                    marginLeft: -150,
+                    objectPosition: 'top left',
+                  }}
+                />
+                {/* <div
                   className="rounded-lg shadow-lg bg-gray-100 border border-gray-300 flex items-center justify-center"
                   style={{ height: 400, width: 600 }}
                 >
                   <CloudIcon className="h-48 w-48 text-gray-400 mx-auto" />
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -256,6 +273,7 @@ export default function Home() {
               >
                 <Cog8ToothIcon className="h-48 w-48 text-gray-400 mx-auto" />
               </div>
+
               <div className="flex flex-col justify-center order-1 md:order-2">
                 <h2 className="text-4xl font-semibold text-gray-800 text-right">
                   The tools you need.

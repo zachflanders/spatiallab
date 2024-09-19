@@ -4,10 +4,10 @@
 
 .header {
   position: relative;
-  z-index: 10; /* Ensure the header is above the children */
+  z-index: 0; /* Ensure the header is above the children */
 }
 
 .content {
   position: relative;
-  z-index: 1; /* Ensure the content is below the header */
+  z-index: 0; /* Ensure the content is below the header */
 }

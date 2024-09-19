@@ -8,6 +8,9 @@ from .views import (
     FileUploadView,
     DirectoryViewSet,
     ExportLayerAsGeoJSON,
+    GenerateSignedUrlView,
+    StartIngestTaskView,
+    CheckTaskStatusView,
 )
 
 router = DefaultRouter()
@@ -26,4 +29,15 @@ urlpatterns = [
         name="export_layer_geojson",
     ),
     path("", include(router.urls)),
+    path(
+        "generate-signed-url/",
+        GenerateSignedUrlView.as_view(),
+        name="generate-signed-url",
+    ),
+    path("start-ingest-task/", StartIngestTaskView.as_view(), name="start-ingest-task"),
+    path(
+        "check-task-status/<str:task_id>/",
+        CheckTaskStatusView.as_view(),
+        name="check-task-status",
+    ),
 ]

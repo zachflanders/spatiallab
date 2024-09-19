@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FolderPlusIcon,
   ChevronDownIcon,
@@ -64,6 +64,28 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   const [directoryToMove, setDirectoryToMove] = useState<Directory | null>(
     null,
   );
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      contextMenuRef.current &&
+      !contextMenuRef.current.contains(event.target as Node)
+    ) {
+      closeContextMenu();
+    }
+  };
+
+  useEffect(() => {
+    if (contextMenuVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [contextMenuVisible]);
 
   const handleOptionClick = (option: string) => {
     console.log(option);
@@ -108,7 +130,6 @@ const FolderPane: React.FC<FolderPaneProps> = ({
 
   const doMoveDirectory = (newParentId: number | null) => {
     if (directoryToMove) {
-      console.log('Moving directory', directoryToMove.id, 'to', newParentId);
       moveDirectory(directoryToMove.id, directoryToMove.name, newParentId);
     }
   };
@@ -116,7 +137,6 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   const handleMove = () => {
     setShowMoveModal(true);
     setDirectoryToMove(contextMenuDirectory);
-    console.log('Moving directory', contextMenuDirectory);
     closeContextMenu();
   };
 
@@ -228,13 +248,13 @@ const FolderPane: React.FC<FolderPaneProps> = ({
       />
       {contextMenuVisible && (
         <div
+          ref={contextMenuRef}
           className="absolute bg-white shadow-md rounded-md py-2"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
             zIndex: 100,
           }}
-          onMouseLeave={closeContextMenu}
         >
           <button
             className="block w-full text-left p-2 hover:bg-gray-100"

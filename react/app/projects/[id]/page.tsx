@@ -9,10 +9,10 @@ import VectorTileSource from 'ol/source/VectorTile';
 import OSM from 'ol/source/OSM';
 import 'ol/ol.css';
 import Sidebar from './Sidebar';
-import { Layer, ProjectLayer } from './types';
+import { Layer, ProjectLayer } from '../../projects/[id]/types';
 import { PlusIcon, ArrowsPointingOutIcon } from '@heroicons/react/20/solid';
 import { Style, Fill, Stroke } from 'ol/style';
-import StyleControl, { StyleOptions } from './StyleControl';
+import StyleControl, { StyleOptions } from '../../projects/[id]/StyleControl';
 import { applyStyleToLayer } from '../../utils/styleUtils';
 
 interface PageProps {
@@ -76,8 +76,8 @@ export default function Page({ params }: PageProps) {
         }),
       ],
       view: new View({
-        center: [0, 0],
-        zoom: 2,
+        center: undefined,
+        zoom: undefined,
       }),
     });
 
@@ -93,7 +93,6 @@ export default function Page({ params }: PageProps) {
       map.getView().fit(project.extent, {
         size: map.getSize(),
         maxZoom: 18, // Adjust maxZoom as needed
-        duration: 500,
       });
     }
   }, [project?.extent]);
