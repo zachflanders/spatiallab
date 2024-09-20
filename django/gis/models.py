@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.gis.db import models as gis_models
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
-from django.core.exceptions import ValidationError
+from ordered_model.models import OrderedModel
 
 
 class Directory(models.Model):
@@ -117,14 +117,22 @@ class ProjectLayerGroup(models.Model):
         return self.name
 
 
-class ProjectLayer(models.Model):
+class ProjectLayer(OrderedModel):
+    BASEMAP_CHOICES = [
+        ("osm", "OpenStreetMap"),
+        ("satellite", "Satellite"),
+    ]
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="project_layers"
     )
     layer = models.ForeignKey(
-        Layer, on_delete=models.CASCADE, related_name="project_layers"
+        Layer,
+        on_delete=models.CASCADE,
+        related_name="project_layers",
+        null=True,
+        blank=True,
     )
     group = models.ForeignKey(
         ProjectLayerGroup,
@@ -134,6 +142,11 @@ class ProjectLayer(models.Model):
         blank=True,
     )
     style = models.JSONField(null=True, blank=True)
+    basemap = models.CharField(
+        max_length=50, choices=BASEMAP_CHOICES, null=True, blank=True
+    )
 
-    def __str__(self):
-        return f"Project: {self.project.name}, Layer: {self.layer.name}"
+    order_with_respect_to = "project"
+
+    class Meta(OrderedModel.Meta):
+        ordering = ["order"]

@@ -12,6 +12,7 @@ from django.http import JsonResponse, HttpResponse
 from google.cloud import storage
 from pyproj import Transformer
 from rest_framework import generics, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -301,3 +302,31 @@ class CheckTaskStatusView(APIView):
     def get(self, request, task_id, *args, **kwargs):
         status_data = cache.get(task_id, {"status": "processing"})
         return Response(status_data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsOwner])
+def move_model_up(request, pk):
+    try:
+        model_instance = ProjectLayer.objects.get(pk=pk)
+        model_instance.up()
+        return Response({"detail": "Moved up successfully"}, status=status.HTTP_200_OK)
+    except ProjectLayer.DoesNotExist:
+        return Response(
+            {"detail": "Object not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsOwner])
+def move_model_down(request, pk):
+    try:
+        model_instance = ProjectLayer.objects.get(pk=pk)
+        model_instance.down()
+        return Response(
+            {"detail": "Moved down successfully"}, status=status.HTTP_200_OK
+        )
+    except ProjectLayer.DoesNotExist:
+        return Response(
+            {"detail": "Object not found"}, status=status.HTTP_404_NOT_FOUND
+        )

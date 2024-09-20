@@ -23,6 +23,7 @@ google-auth-oauthlib = "^1.2.1"
 google-auth-httplib2 = "^0.2.0"
 djangorestframework-simplejwt = "^5.3.1"
 django-redis = "^5.4.0"
+django-ordered-model = "^3.7.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.0" 

@@ -12,12 +12,26 @@ class LayerSerializer(serializers.ModelSerializer):
 class ProjectLayerSerializer(serializers.ModelSerializer):
     layer = LayerSerializer(read_only=True)
     layer_id = serializers.PrimaryKeyRelatedField(
-        queryset=Layer.objects.all(), source="layer", write_only=True
+        queryset=Layer.objects.all(),
+        source="layer",
+        write_only=True,
+        allow_null=True,
+        required=False,
     )
 
     class Meta:
         model = ProjectLayer
         fields = "__all__"
+
+    def create(self, validated_data):
+        if "order" not in validated_data:
+            validated_data["order"] = ProjectLayer.objects.count() + 1
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if "order" not in validated_data:
+            validated_data["order"] = instance.order
+        return super().update(instance, validated_data)
 
 
 class ProjectSerializer(serializers.ModelSerializer):

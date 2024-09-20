@@ -466,6 +466,17 @@ docs = ["furo (>=2021.8.17b43,<2021.9.dev0)", "sphinx (>=3.5.0)", "sphinx-notfou
 testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)"]
 
 [[package]]
+name = "django-ordered-model"
+version = "3.7.4"
+description = "Allows Django models to be ordered and provides a simple admin interface for reordering them."
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-ordered-model-3.7.4.tar.gz", hash = "sha256:f258b9762525c00a53009e82f8b8bf2a3aa315e8b453e281e8fdbbfe2b8cb3ba"},
+    {file = "django_ordered_model-3.7.4-py3-none-any.whl", hash = "sha256:dfcd3183fe0749dad1c9971cba1d6240ce7328742a30ddc92feca41107bb241d"},
+]
+
+[[package]]
 name = "django-redis"
 version = "5.4.0"
 description = "Full featured redis cache backend for Django."
@@ -1549,4 +1560,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fd9c2e8848e71f3a1de6d221f4da460ea6823280a8263ded168a28eafd8aa642"
+content-hash = "2f3b61a2687cfa5b6c8d8eadde04378a7b5082ec930c644e9e1eae3d0abac113"

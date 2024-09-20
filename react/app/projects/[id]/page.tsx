@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import api from '../../api';
 import { Map, View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
@@ -9,11 +9,11 @@ import VectorTileSource from 'ol/source/VectorTile';
 import OSM from 'ol/source/OSM';
 import 'ol/ol.css';
 import Sidebar from './Sidebar';
-import { Layer, ProjectLayer } from '../../projects/[id]/types';
+import { Layer, ProjectLayer, Basemap } from '../../projects/[id]/types';
 import { PlusIcon, ArrowsPointingOutIcon } from '@heroicons/react/20/solid';
-import { Style, Fill, Stroke } from 'ol/style';
 import StyleControl, { StyleOptions } from '../../projects/[id]/StyleControl';
 import { applyStyleToLayer } from '../../utils/styleUtils';
+import { set } from 'ol/transform';
 
 interface PageProps {
   params: {
@@ -35,46 +35,31 @@ interface Project {
   extent?: number[];
 }
 
+function generateUID() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
 export default function Page({ params }: PageProps) {
   const [project, setProject] = useState<Project | null>(null);
   const [map, setMap] = useState<Map | null>(null);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [activeModal, setActiveModal] = useState<'add' | 'style' | null>(null);
-  const [selectedLayer, setSelectedLayer] = useState<Layer | null>(null);
-  const [selectedStylingLayer, setSelectedStylingLayer] =
-    useState<ProjectLayer | null>(null);
-  const [projectLayers, setProjectLayers] = useState<ProjectLayer[]>([]);
-  const [mapLayers, setMapLayers] = useState<MapLayerProps[]>([]);
+  const [selectedLayer, setSelectedLayer] = useState<Layer | Basemap | null>(
+    null,
+  );
+  const [selectedStylingLayer, setSelectedStylingLayer] = useState<
+    VectorTileLayer | TileLayer | null
+  >(null);
+
   const [layerStyle, setLayerStyle] = useState<StyleOptions | null>(null);
+  const [fooLayers, setFooLayers] = useState<(TileLayer | VectorTileLayer)[]>(
+    [],
+  );
 
   useEffect(() => {
-    api.get(`/gis/projects/${params.id}/`).then((response) => {
-      setProject({
-        name: response.data.name,
-        id: response.data.id,
-        extent: response.data.extent ?? null,
-      });
-      setProjectLayers(
-        response.data.project_layers.map((projectLayer: ProjectLayer) => {
-          const { id, ...layerWithoutId } = projectLayer.layer;
-          return {
-            id: projectLayer.id,
-            layerId: id,
-            layer: projectLayer.layer,
-            style: projectLayer.style,
-            ...layerWithoutId,
-          };
-        }),
-      );
-    });
-    // Initialize OpenLayers map
     const newMap = new Map({
       target: 'map',
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-      ],
+      layers: [],
       view: new View({
         center: undefined,
         zoom: undefined,
@@ -82,6 +67,49 @@ export default function Page({ params }: PageProps) {
     });
 
     setMap(newMap);
+    api.get(`/gis/projects/${params.id}/`).then((response) => {
+      setProject({
+        name: response.data.name,
+        id: response.data.id,
+        extent: response.data.extent ?? null,
+      });
+      const intialLayers = response.data.project_layers.map(
+        (projectLayer: ProjectLayer) => {
+          if (!projectLayer.basemap) {
+            const layer = new VectorTileLayer({
+              source: new VectorTileSource({
+                format: new MVT(),
+                url: `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/public.layer_${projectLayer.layer.id}_features/{z}/{x}/{y}.pbf`,
+              }),
+            });
+            layer.setProperties({
+              name: projectLayer.layer.name,
+              id: projectLayer.id,
+              layerId: projectLayer.layer.id,
+            });
+            if (projectLayer.style) {
+              const { fillColor, strokeColor, lineWidth } = projectLayer.style;
+              applyStyleToLayer(layer, { fillColor, strokeColor, lineWidth });
+            }
+            return layer;
+          } else if (projectLayer.basemap === 'osm') {
+            const source = new OSM();
+            const layer = new TileLayer({
+              source: source,
+            });
+            layer.setProperties({
+              name: 'Open Street Map',
+              id: projectLayer.id,
+            });
+            console.log(layer);
+            return layer;
+          }
+        },
+      );
+      console.log(intialLayers);
+      setFooLayers(intialLayers);
+    });
+
     return () => {
       newMap.setTarget('');
     };
@@ -94,45 +122,31 @@ export default function Page({ params }: PageProps) {
         size: map.getSize(),
         maxZoom: 18, // Adjust maxZoom as needed
       });
+    } else {
+      if (!map) return;
+      map.getView().setCenter([0, 0]);
+      map.getView().setZoom(2);
     }
   }, [project?.extent]);
 
   useEffect(() => {
-    projectLayers.forEach((projectLayer) => {
-      if (
-        !mapLayers.find(
-          (mapLayer) => mapLayer.projectLayerId === projectLayer.id,
-        )
-      ) {
-        addLayerToMap(projectLayer);
-      }
-    });
-    mapLayers.forEach((mapLayer) => {
-      if (
-        !projectLayers.find(
-          (projectLayer) => projectLayer.id === mapLayer.projectLayerId,
-        )
-      ) {
-        removeLayerFromMap(mapLayer.projectLayerId);
-      }
-    });
-    if (projectLayers.length === 0) {
-      mapLayers.forEach((mapLayer) => {
-        removeLayerFromMap(mapLayer.projectLayerId);
-      });
+    console.log(selectedLayer);
+  }, [selectedLayer]);
+
+  useEffect(() => {
+    if (map && fooLayers.length > 0) {
+      map.setLayers(fooLayers);
     }
-  }, [projectLayers, mapLayers]);
+  }, [fooLayers, map]);
 
   const openAddLayerModal = () => {
     setActiveModal('add');
-
-    // Fetch layers from the API
     api.get('/gis/layers/').then((response) => {
       setLayers(response.data.layers);
     });
   };
 
-  const openStylingModal = (layer: ProjectLayer) => {
+  const openStylingModal = (layer: VectorTileLayer | TileLayer) => {
     setSelectedStylingLayer(layer);
     setActiveModal('style');
   };
@@ -143,85 +157,56 @@ export default function Page({ params }: PageProps) {
     setSelectedStylingLayer(null);
   };
 
-  const removeLayerFromMap = (projectLayerId: number) => {
-    if (!map) return;
-
-    const mapLayer = mapLayers.find(
-      (mapLayer) => mapLayer.projectLayerId === projectLayerId,
-    );
-    if (mapLayer) {
-      map.removeLayer(mapLayer.tileLayer);
-      setMapLayers((prevLayers) =>
-        prevLayers.filter(
-          (prevLayer) => prevLayer.projectLayerId !== projectLayerId,
-        ),
-      );
-    }
-  };
-
-  const addLayerToMap = (selectedLayer: ProjectLayer) => {
-    if (!selectedLayer || !map) return;
-
-    const newMapLayer: MapLayerProps = {
-      projectLayerId: selectedLayer.id,
-      layerId: selectedLayer.layerId,
-      visible: true,
-      tileLayer: new VectorTileLayer({
-        source: new VectorTileSource({
-          format: new MVT(),
-          url: `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/public.layer_${selectedLayer.layerId}_features/{z}/{x}/{y}.pbf`,
-        }),
-      }),
-    };
-
-    if (selectedLayer.style) {
-      const style = new Style({
-        fill: new Fill({
-          color: selectedLayer.style.fillColor,
-        }),
-        stroke: new Stroke({
-          color: selectedLayer.style.strokeColor,
-          width: selectedLayer.style.strokeWidth,
-        }),
-      });
-      newMapLayer.tileLayer.setStyle(style);
-    }
-
-    map.addLayer(newMapLayer.tileLayer);
-
-    setMapLayers((prevLayers) => [...prevLayers, newMapLayer]);
-
-    // Zoom to the selected layer's extent
-    if (newMapLayer.extent) {
-      map.getView().fit(newMapLayer.extent, {
-        size: map.getSize(),
-        maxZoom: 18, // Adjust maxZoom as needed
-      });
-    }
-  };
-
   const addLayer = () => {
     if (!selectedLayer) return;
-    api
-      .post(`/gis/project-layers/`, {
-        layer_id: selectedLayer.id,
-        project: project?.id,
-      })
-      .then((response) => {
+    const body = {
+      project: project?.id,
+      ...('id' in selectedLayer && { layer_id: selectedLayer.id }),
+      ...('basemap' in selectedLayer && { basemap: selectedLayer.basemap }),
+    };
+    api.post(`/gis/project-layers/`, body).then((response) => {
+      const newProjectLayerId = response.data.id;
+      if ('id' in selectedLayer) {
         const { id, ...layerWithoutId } = selectedLayer;
-        const newProjectLayerId = response.data.id;
         const newProjectLayer = {
           id: newProjectLayerId,
           layerId: id,
           layer: selectedLayer,
           ...layerWithoutId,
         };
-        setProjectLayers([
-          ...projectLayers,
-          { ...newProjectLayer, style: null },
-        ]);
-        closeModal();
-      });
+      } else {
+        const newProjectLayer = {
+          id: newProjectLayerId,
+          layer: selectedLayer,
+          ...selectedLayer,
+        };
+      }
+      if ('basemap' in selectedLayer) {
+        const newLayer = new TileLayer({
+          source: new OSM(),
+        });
+        newLayer.setProperties({
+          name: selectedLayer.name,
+          id: newProjectLayerId,
+        });
+        setFooLayers([...fooLayers, newLayer]);
+      } else {
+        const newLayer = new VectorTileLayer({
+          source: new VectorTileSource({
+            format: new MVT(),
+            url: `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/public.layer_${selectedLayer.id}_features/{z}/{x}/{y}.pbf`,
+          }),
+        });
+        newLayer.setProperties({
+          name: selectedLayer.name,
+          id: newProjectLayerId,
+          layerId: selectedLayer.id,
+        });
+
+        setFooLayers([...fooLayers, newLayer]);
+      }
+    });
+    closeModal();
   };
 
   const updateLayerStyle = (style: StyleOptions) => {
@@ -233,16 +218,17 @@ export default function Page({ params }: PageProps) {
     if (!map) return;
     if (!layerStyle) return;
 
-    const mapLayer = mapLayers.find(
-      (layer) => layer.projectLayerId === selectedStylingLayer.id,
+    const mapLayer = fooLayers.find(
+      (layer) =>
+        layer.getProperties().id === selectedStylingLayer.getProperties().id,
     );
 
     if (mapLayer) {
-      applyStyleToLayer(mapLayer.tileLayer, layerStyle);
+      applyStyleToLayer(mapLayer, layerStyle);
       map.render();
     }
-    api.put(`/gis/project-layers/${selectedStylingLayer.id}/`, {
-      layer_id: selectedStylingLayer.layerId,
+    api.put(`/gis/project-layers/${selectedStylingLayer.getProperties().id}/`, {
+      layer_id: selectedStylingLayer.getProperties().layerId,
       project: project?.id,
       style: layerStyle,
     });
@@ -285,8 +271,8 @@ export default function Page({ params }: PageProps) {
       <div className="flex flex-grow">
         {/* Sidebar */}
         <Sidebar
-          projectLayers={projectLayers}
-          setProjectLayers={setProjectLayers}
+          projectLayers={fooLayers}
+          setProjectLayers={setFooLayers}
           setActiveModal={setActiveModal}
           setSelectedStylingLayer={setSelectedStylingLayer}
         />
@@ -302,12 +288,15 @@ export default function Page({ params }: PageProps) {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg w-1/3">
             <h2 className="text-xl font-bold mb-4">Select a Layer to Add</h2>
-            <ul>
+            <h3 className="text-lg font-bold mb-2">Your Layers</h3>
+            <ul className="h-80 overflow-auto">
               {layers.map((layer) => (
                 <li key={layer.id} className="mb-2">
                   <button
                     className={`w-full text-left p-2 rounded ${
-                      selectedLayer?.id === layer.id
+                      (selectedLayer &&
+                        'id' in selectedLayer &&
+                        selectedLayer.id) === layer.id
                         ? 'bg-blue-100'
                         : 'bg-gray-100'
                     }`}
@@ -318,6 +307,27 @@ export default function Page({ params }: PageProps) {
                 </li>
               ))}
             </ul>
+            <h3 className="text-lg font-bold mb-2">Basemaps</h3>
+            <ul>
+              <li>
+                <button
+                  className={`w-full text-left p-2 rounded ${
+                    selectedLayer && selectedLayer.name === 'Open Street Map'
+                      ? 'bg-blue-100'
+                      : 'bg-gray-100'
+                  }`}
+                  onClick={() =>
+                    setSelectedLayer({
+                      name: 'Open Street Map',
+                      basemap: 'osm',
+                    })
+                  }
+                >
+                  OpenStreetMap
+                </button>
+              </li>
+            </ul>
+
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded"
@@ -344,8 +354,13 @@ export default function Page({ params }: PageProps) {
             <h2 className="text-xl font-bold mb-4">Style Layer</h2>
             {selectedStylingLayer && (
               <div>
-                <span>{selectedStylingLayer.name}</span>
-                <StyleControl onUpdateStyle={updateLayerStyle} />
+                <span>{selectedStylingLayer.getProperties().name}</span>
+                {selectedStylingLayer instanceof VectorTileLayer && (
+                  <StyleControl
+                    selectedStylingLayer={selectedStylingLayer}
+                    onUpdateStyle={updateLayerStyle}
+                  />
+                )}
               </div>
             )}
 

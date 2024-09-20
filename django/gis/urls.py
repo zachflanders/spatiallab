@@ -11,6 +11,8 @@ from .views import (
     GenerateSignedUrlView,
     StartIngestTaskView,
     CheckTaskStatusView,
+    move_model_up,
+    move_model_down,
 )
 
 router = DefaultRouter()
@@ -40,4 +42,6 @@ urlpatterns = [
         CheckTaskStatusView.as_view(),
         name="check-task-status",
     ),
+    path("project-layer/<int:pk>/move-up/", move_model_up, name="move_model_up"),
+    path("project-layer/<int:pk>/move-down/", move_model_down, name="move_model_down"),
 ]
