@@ -24,7 +24,6 @@ from gis.models import (
     Project,
     ProjectLayer,
     Directory,
-    FeaturePropertyValue,
 )
 from gis.serializers import (
     LayerSerializer,
@@ -154,15 +153,8 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         page = request.GET.get("page", 1)
         page_size = request.GET.get("page_size", 10)
-        features = LayerFeature.objects.filter(layer=layer).prefetch_related(
-            "feature_values__property"
-        )
+        features = LayerFeature.objects.filter(layer=layer)
         paginator = Paginator(features, page_size)
-        logger.info(layer)
-        logger.info(features[0])
-        logger.info(features[0].id)
-        logger.info(features[0].feature_values.all())
-        logger.info(FeaturePropertyValue.objects.filter(feature=features[0]))
 
         try:
             features_page = paginator.page(page)
@@ -174,10 +166,7 @@ class LayerDetailView(generics.RetrieveUpdateDestroyAPIView):
         table_data = [
             {
                 "Feature ID": feature.id,
-                **{
-                    value.property.name: value.value
-                    for value in feature.feature_values.all()
-                },
+                **feature.properties,
             }
             for feature in features_page
         ]
@@ -253,9 +242,6 @@ class ExportLayerAsGeoJSON(APIView):
         try:
             # Retrieve the Layer and associated Features
             layer = Layer.objects.get(id=layer_id, user=request.user)
-            features = LayerFeature.objects.filter(layer=layer).prefetch_related(
-                "feature_values__property"
-            )
 
             # Serialize features to GeoJSON
             geojson = {
@@ -264,15 +250,9 @@ class ExportLayerAsGeoJSON(APIView):
                     {
                         "type": "Feature",
                         "geometry": json.loads(feature.geometry.geojson),
-                        "properties": {
-                            "id": feature.id,
-                            **{
-                                value.property.name: value.value
-                                for value in feature.feature_values.all()
-                            },
-                        },
+                        "properties": feature.properties,
                     }
-                    for feature in features
+                    for feature in layer.features.all()
                 ],
             }
 

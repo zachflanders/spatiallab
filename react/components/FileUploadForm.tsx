@@ -1,34 +1,38 @@
 'use client';
 import React, { useState, useEffect, use } from 'react';
-import Button from './Button';
-import { useRouter } from 'next/navigation';
-import { getCookie } from '../app/accounts/auth';
 import api from '../app/api';
-import { Directory } from '../app/data/types';
-import { set } from 'ol/transform';
 import { useTasks } from '../app/TaskProvider';
-import { Task } from '../app/types';
-import { remove } from 'ol/array';
+import { Layer, Directory } from '../app/data/types';
+import { useRouter } from 'next/navigation';
 
 interface FileUploadFormProps {
+  homeLayers: Layer[];
+  setHomeLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+  directories: Directory[];
+  setDirectories: React.Dispatch<React.SetStateAction<Directory[]>>;
   onClose: () => void;
 }
+
+const sortLayers = (layers: Layer[]): Layer[] => {
+  return layers.sort((a, b) => a.name.localeCompare(b.name));
+};
 
 function generateUID() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-const FileUploadForm: React.FC<FileUploadFormProps> = ({ onClose }) => {
+const FileUploadForm: React.FC<FileUploadFormProps> = ({
+  homeLayers,
+  setHomeLayers,
+  directories,
+  setDirectories,
+  onClose,
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [directory, setDirectory] = useState<number | null>(null);
-  const [directories, setDirectories] = useState([]);
   const { addTask, updateTask, removeTask } = useTasks();
 
-  useEffect(() => {
-    api.get('/gis/directories/').then((response) => {
-      setDirectories(response.data);
-    });
-  }, []);
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -102,7 +106,44 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({ onClose }) => {
 
             if (status === 'completed') {
               console.log('Ingest completed!', statusData);
+              const newLayerId = statusData.data.layer_id;
               removeTask(task_id);
+              const response = await api.get(`/gis/layer/${newLayerId}/`);
+              const newLayer = response.data;
+              if (directory) {
+                const updateDirectories = (
+                  dirs: Directory[],
+                  directoryId: number,
+                  newLayer: Layer,
+                ): Directory[] => {
+                  return dirs.map((dir) => {
+                    if (dir.id === directoryId) {
+                      return {
+                        ...dir,
+                        layers: sortLayers([...dir.layers, newLayer]),
+                      };
+                    }
+                    if (dir.subdirectories) {
+                      return {
+                        ...dir,
+                        subdirectories: updateDirectories(
+                          dir.subdirectories,
+                          directoryId,
+                          newLayer,
+                        ),
+                      };
+                    }
+                    return dir;
+                  });
+                };
+                setDirectories((prevDirectories) =>
+                  updateDirectories(prevDirectories, directory, newLayer),
+                );
+              } else {
+                setHomeLayers(sortLayers([...homeLayers, newLayer]));
+              }
+              router.push(`/data?selected-layer=${newLayerId}`);
+
               break;
             } else if (status === 'error') {
               console.error('Error processing file:', statusData.error);
@@ -111,7 +152,7 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({ onClose }) => {
             }
 
             // Update progress indicator on the UI
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
         } else {
           console.error('Upload failed', xhr.statusText);

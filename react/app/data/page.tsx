@@ -31,6 +31,29 @@ const Page: React.FC = () => {
     return layers.sort((a, b) => a.name.localeCompare(b.name));
   };
 
+  const findLayerInDirectories = (
+    directories: Directory[],
+    selectedLayerParam: number,
+  ): Layer | null => {
+    for (const dir of directories) {
+      for (const layer of dir.layers) {
+        if (layer.id === selectedLayerParam) {
+          return layer;
+        }
+      }
+      if (dir.subdirectories) {
+        const layer = findLayerInDirectories(
+          dir.subdirectories,
+          selectedLayerParam,
+        );
+        if (layer) {
+          return layer;
+        }
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     api.get('/gis/layers/').then((response) => {
       const responseData = response.data;
@@ -40,19 +63,29 @@ const Page: React.FC = () => {
         setDirectories(response.data);
         const homeLayers = sortedLayers.filter((layer) => !layer.directory);
         setHomeLayers(homeLayers);
-      });
+        const selectedLayerParam = searchParams.get('selected-layer');
+        console.log('selectedLayerParam', selectedLayerParam);
 
-      const selectedLayerParam = searchParams.get('selectedLayer');
-      if (selectedLayerParam) {
-        const layer = sortedLayers.find(
-          (layer) => layer.id === selectedLayerParam,
-        );
-        if (layer) {
-          handleSelection(layer);
+        if (selectedLayerParam && homeLayers.length > 0) {
+          console.log('homeLayers', homeLayers);
+          const layer = homeLayers.find(
+            (layer) => layer.id === parseInt(selectedLayerParam),
+          );
+          console.log('layer', layer);
+          if (layer) {
+            handleSelection(layer);
+          }
         }
-      } else {
-        handleSelection(sortedLayers[0]);
-      }
+        if (selectedLayerParam && directories.length > 0) {
+          const layer = findLayerInDirectories(
+            directories,
+            parseInt(selectedLayerParam),
+          );
+          if (layer) {
+            handleSelection(layer);
+          }
+        }
+      });
     });
   }, [searchParams, setLayers, setHeaders, setData, setExtent]);
 
@@ -319,6 +352,7 @@ const Page: React.FC = () => {
             <FolderPane
               layers={layers}
               homeLayers={homeLayers}
+              setHomeLayers={setHomeLayers}
               directories={directories}
               setDirectories={setDirectories}
               selectedLayer={selectedLayer}
