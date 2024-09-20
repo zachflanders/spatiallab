@@ -84,6 +84,16 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://redis:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -153,7 +163,7 @@ GCS_CREDENTIALS = service_account.Credentials.from_service_account_file(
 GCS_BUCKET_NAME = env("GCS_BUCKET_NAME")
 
 # Celery settings
-CELERY_BROKER_URL = "amqp://user:password@rabbitmq:5672//"
+CELERY_BROKER_URL = "pyamqp://user:password@rabbitmq:5672//"
 CELERY_RESULT_BACKEND = "rpc://"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"

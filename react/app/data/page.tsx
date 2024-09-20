@@ -304,11 +304,10 @@ const Page: React.FC = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="flex flex-col h-screen" style={{ marginTop: -72 }}>
+      <div className="flex flex-col " style={{ height: 'calc(100vh - 72px)' }}>
         {/* Content */}
         <div
           className="flex flex-1 overflow-hidden"
-          style={{ paddingTop: 72 }}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         >

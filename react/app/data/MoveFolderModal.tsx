@@ -42,7 +42,6 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
   }, [directories]);
 
   const handleSelectFolder = (folder: number | null) => {
-    console.log(`Selected folder: ${folder}`);
     setSelectedFolder(folder);
   };
 
@@ -75,7 +74,6 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
     targetId: number,
     directories: Directory[],
   ): boolean => {
-    console.log(current, targetId, directories);
     if (current.id === targetId) {
       return true;
     }

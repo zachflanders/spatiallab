@@ -69,12 +69,12 @@ const Page: React.FC = () => {
                 className="py-2 border-b flex justify-between items-center"
               >
                 <div>
-                  <Link className="font-bold" href={`/project/${project.id}`}>
+                  <Link className="font-bold" href={`/projects/${project.id}`}>
                     {project.name}
                   </Link>
                   <p>{project.description}</p>
                 </div>
-                <Link href={`/project/${project.id}`}>
+                <Link href={`/projects/${project.id}`}>
                   <button className="bg-grey-100 hover:bg-grey-200  py-2 px-3 rounded border flex items-center">
                     View Project <ChevronRightIcon className="ml-1 h-4 w-4" />
                   </button>

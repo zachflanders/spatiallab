@@ -1,13 +1,1 @@
-.template-container {
-  position: relative;
-}
 
-.header {
-  position: relative;
-  z-index: 10; /* Ensure the header is above the children */
-}
-
-.content {
-  position: relative;
-  z-index: 1; /* Ensure the content is below the header */
-}

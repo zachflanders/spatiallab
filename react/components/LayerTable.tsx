@@ -80,13 +80,13 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
           </div>
         ) : (
           <>
-            <table className="min-w-full bg-white border-t">
+            <table className="min-w-full bg-white border-collapse">
               <thead>
                 <tr>
                   {headers.map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-2 border-b border-gray-300 text-left text-gray-700"
+                      className="px-4 py-2 border-r border-b border-gray-300 text-left text-gray-700 text-sm font-semibold"
                     >
                       {header}
                     </th>
@@ -99,7 +99,7 @@ const LayerTable: React.FC<TableProps> = ({ layer }) => {
                     {headers.map((header) => (
                       <td
                         key={header}
-                        className="px-4 py-2 border-b border-gray-300"
+                        className="px-4 py-2 border-b border-r border-gray-200 whitespace-nowrap text-sm"
                       >
                         {row[header] !== null ? row[header] : '-'}
                       </td>

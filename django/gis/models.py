@@ -39,6 +39,18 @@ class Layer(models.Model):
         blank=True,
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "user"],
+                condition=models.Q(directory__isnull=True),
+                name="unique_name_user_when_directory_is_null",
+            ),
+            models.UniqueConstraint(
+                fields=["name", "user", "directory"], name="unique_name_user_directory"
+            ),
+        ]
+
     def __str__(self):
         return self.name
 
