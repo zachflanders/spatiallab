@@ -12,6 +12,8 @@ import { Layer, Directory } from './types';
 import DirectoryNode from './DirectoryNode';
 import MoveFolderModal from './MoveFolderModal';
 import FileUploadForm from '@/components/FileUploadForm';
+import { useTasks } from '../TaskProvider';
+import { Task } from '../types';
 
 interface FolderPaneProps {
   layers: Layer[];
@@ -64,6 +66,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
   const [directoryToMove, setDirectoryToMove] = useState<Directory | null>(
     null,
   );
+  const { tasks } = useTasks();
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -193,7 +196,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
           </button>
         </div>
       </div>
-      <div className="pr-2 w-full">
+      <div className="pr-2 w-full h-full">
         {directories &&
           directories.map((directory) => (
             <DirectoryNode
@@ -237,6 +240,24 @@ const FolderPane: React.FC<FolderPaneProps> = ({
             </div>
           ))}
       </div>
+      {tasks && (
+        <div className="sticky bottom-0 bg-white border-t p-2">
+          {tasks.map((task: Task, index: number) => (
+            <div key={index} className="mb-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm">{task.name}</span>
+                <span className="text-sm">{task.progress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full"
+                  style={{ width: `${task.progress}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       <AddDirectoryModal
         isOpen={isModalOpen}
         onClose={closeModal}

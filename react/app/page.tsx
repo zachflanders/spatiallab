@@ -13,8 +13,6 @@ import {
   GlobeAmericasIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/24/outline';
-import { set } from 'ol/transform';
-import Image from 'next/image';
 
 export default function Home() {
   const { isAuthenticated, setIsAuthenticated, isLoading, setIsLoading } =
@@ -257,12 +255,6 @@ export default function Home() {
                     objectPosition: 'top left',
                   }}
                 />
-                {/* <div
-                  className="rounded-lg shadow-lg bg-gray-100 border border-gray-300 flex items-center justify-center"
-                  style={{ height: 400, width: 600 }}
-                >
-                  <CloudIcon className="h-48 w-48 text-gray-400 mx-auto" />
-                </div> */}
               </div>
             </div>
 

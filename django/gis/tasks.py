@@ -10,7 +10,7 @@ from google.cloud import storage
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.cache import cache
-from django.db import connection, close_old_connections
+from django.db import connection, close_old_connections, IntegrityError
 
 from pyproj import CRS, Transformer
 
@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 
 class FileIngestor:
 
-    def __init__(self, gcs_path, layer_name, directory, user_email):
+    def __init__(self, gcs_path, layer_name, directory, user_email, task_id):
         self.gcs_path = gcs_path
         self.layer_name = layer_name
         self.directory = directory
         self.user_email = user_email
+        self.task_id = task_id
         self.bucket_name, self.blob_name = self.parse_gcs_path()
 
     def parse_gcs_path(self):
@@ -113,46 +114,98 @@ class FileIngestor:
 
         user = User.objects.get(email=self.user_email)
         # Create or get the Layer instance
-        layer, created = Layer.objects.get_or_create(
-            name=self.layer_name, user=user, directory_id=self.directory
-        )
+
+        def increment_name(name, prev=0):
+            try:
+                if prev == 0:
+                    return Layer.objects.create(
+                        name=self.layer_name, user=user, directory_id=self.directory
+                    )
+                inc_name = Path(name).stem + f"({prev})" + Path(name).suffix
+                return Layer.objects.create(
+                    name=inc_name,
+                    user=user,
+                    directory_id=self.directory,
+                )
+            except IntegrityError:
+                return increment_name(name, prev + 1)
+
+        layer = increment_name(self.layer_name)
         logger.info(self.layer_name)
-        logger.info(f"Layer created: {created}")
+        logger.info(f"Layer created: {layer.id}: {layer.name}")
 
-        # Create Feature instances
-        feature_instances = [
-            LayerFeature(
-                geometry=GEOSGeometry(json.dumps(feature["geometry"])),
-                layer=layer,
+        total_features = len(features)
+        processed_features = 0
+        batch_size = 100
+
+        # Dictionary for properties to avoid querying on each iteration
+        property_dict = {
+            prop.name: prop for prop in LayerProperty.objects.filter(layer=layer)
+        }
+
+        # Batch process for LayerFeature creation
+        for i in range(0, total_features, batch_size):
+            feature_batch = features[i : i + batch_size]
+
+            # Create LayerFeature instances in batches
+            feature_instance_batch = [
+                LayerFeature(
+                    geometry=GEOSGeometry(json.dumps(feature["geometry"])),
+                    layer=layer,
+                )
+                for feature in feature_batch
+            ]
+            LayerFeature.objects.bulk_create(feature_instance_batch)
+
+            # Create LayerProperty instances in batches
+            unique_properties = set(
+                key for feature in feature_batch for key in feature["properties"].keys()
             )
-            for feature in features
-        ]
-        # Bulk create Feature instances
-        LayerFeature.objects.bulk_create(feature_instances)
-        # Create Property instances
-        unique_properties = set(
-            key for feature in features for key in feature["properties"].keys()
-        )
-        logger.info(unique_properties)
-        properties = [
-            LayerProperty(name=key, type="string", layer=layer)
-            for key in unique_properties
-        ]
 
-        # Bulk create Property instances
-        LayerProperty.objects.bulk_create(properties)
+            # Add missing properties to property_dict if any new ones found in this batch
+            new_properties = [
+                LayerProperty(name=key, type="string", layer=layer)
+                for key in unique_properties
+                if key not in property_dict
+            ]
+            LayerProperty.objects.bulk_create(new_properties)
 
-        values = [
-            FeaturePropertyValue(
-                property=LayerProperty.objects.get(name=key, layer=layer),
-                feature=feature_instance,
-                value=value,
-            )
-            for feature, feature_instance in zip(features, feature_instances)
-            for key, value in feature["properties"].items()
-        ]
+            # Update property_dict with any new properties created
+            property_dict.update({prop.name: prop for prop in new_properties})
 
-        FeaturePropertyValue.objects.bulk_create(values)
+            # Create FeaturePropertyValue instances in batches
+            values = []
+            for feature, feature_instance in zip(feature_batch, feature_instance_batch):
+                for key, value in feature["properties"].items():
+                    layer_property = property_dict.get(key)
+                    if layer_property:
+                        values.append(
+                            FeaturePropertyValue(
+                                property=layer_property,
+                                feature=feature_instance,
+                                value=value,
+                            )
+                        )
+
+            # Bulk create FeaturePropertyValue instances
+            FeaturePropertyValue.objects.bulk_create(values)
+
+            # Update the number of processed features and calculate progress
+            processed_features += len(feature_batch)
+            progress = int((processed_features / total_features) * 100)
+
+            # Update cache with progress
+            cache.set(self.task_id, {"status": "processing", "progress": progress})
+
+        # If there are any remaining values after the loop (unlikely, but for safety):
+        if values:
+            FeaturePropertyValue.objects.bulk_create(values)
+            processed_features += len(feature_batch)
+            progress = int((processed_features / total_features) * 100)
+
+            # Final cache update
+            cache.set(self.task_id, {"status": "processing", "progress": progress})
+
         return layer.id
 
     @staticmethod
@@ -216,6 +269,7 @@ def ingest_file_to_db_task(self, file_name, layer_name, directory, user_email):
             layer_name,
             directory,
             user_email,
+            task_id=self.request.id,
         )
 
         # Process the file and get the layer ID

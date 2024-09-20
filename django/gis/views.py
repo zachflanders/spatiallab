@@ -319,5 +319,5 @@ class StartIngestTaskView(APIView):
 
 class CheckTaskStatusView(APIView):
     def get(self, request, task_id, *args, **kwargs):
-        status_data = cache.get(task_id, {"status": "unknown"})
+        status_data = cache.get(task_id, {"status": "processing"})
         return Response(status_data)
