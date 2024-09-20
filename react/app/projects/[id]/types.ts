@@ -4,11 +4,19 @@ export interface Layer {
   extent?: number[];
 }
 
+export interface Basemap {
+  name: string;
+  basemap: 'osm' | 'satellite';
+}
+
 export interface ProjectLayer {
   id: number;
-  layerId: number;
+  layerId?: number;
   name: string;
   layer: Layer;
   extent?: number[];
-  style: any;
+  style?: any;
+  basemap?: 'osm' | 'satellite';
+  getStyle: () => any;
+  getProperties: () => any;
 }

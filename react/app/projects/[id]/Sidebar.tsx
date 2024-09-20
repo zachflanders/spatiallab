@@ -1,16 +1,19 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { EllipsisVerticalIcon } from '@heroicons/react/20/solid';
-import { Layer, ProjectLayer } from './types';
+import { Layer, ProjectLayer, Basemap } from './types';
 import api from '../../api';
-import { set } from 'ol/transform';
+import VectorTileLayer from 'ol/layer/VectorTile';
+import TileLayer from 'ol/layer/Tile';
 
 interface SidebarProps {
-  projectLayers: ProjectLayer[];
-  setProjectLayers: React.Dispatch<React.SetStateAction<ProjectLayer[]>>;
+  projectLayers: (VectorTileLayer | TileLayer)[];
+  setProjectLayers: React.Dispatch<
+    React.SetStateAction<(VectorTileLayer | TileLayer)[]>
+  >;
   setActiveModal: React.Dispatch<React.SetStateAction<'add' | 'style' | null>>;
   setSelectedStylingLayer: React.Dispatch<
-    React.SetStateAction<ProjectLayer | null>
+    React.SetStateAction<VectorTileLayer | TileLayer | null>
   >;
 }
 
@@ -25,16 +28,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     x: 0,
     y: 0,
   });
-  const [activeLayer, setActiveLayer] = useState<ProjectLayer | null>(null);
+  const [activeLayer, setActiveLayer] = useState<
+    VectorTileLayer | TileLayer | null
+  >(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  const headerHeight = 72;
-
-  const openContextMenu = (event: React.MouseEvent, layer: ProjectLayer) => {
+  const openContextMenu = (
+    event: React.MouseEvent,
+    layer: VectorTileLayer | TileLayer,
+  ) => {
     event.preventDefault();
     setContextMenuPosition({
       x: event.clientX,
-      y: event.clientY - headerHeight,
+      y: event.clientY,
     });
     setActiveLayer(layer);
     setContextMenuVisible(true);
@@ -45,18 +51,26 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleStyleLayer = () => {
-    setActiveModal('style');
-    setSelectedStylingLayer(activeLayer);
-    closeContextMenu();
+    if (activeLayer && !('basemap' in activeLayer.getProperties())) {
+      console.log(activeLayer);
+      setActiveModal('style');
+      setSelectedStylingLayer(activeLayer);
+      closeContextMenu();
+    }
   };
 
   const handleRemoveLayer = () => {
     if (!activeLayer) return;
-    api.delete(`/gis/project-layers/${activeLayer.id}/`).then((response) => {
-      setProjectLayers((prevProjectLayers) =>
-        prevProjectLayers.filter((layer) => layer.id !== activeLayer.id),
-      );
-    });
+    api
+      .delete(`/gis/project-layers/${activeLayer.getProperties().id}/`)
+      .then((response) => {
+        setProjectLayers((prevProjectLayers) =>
+          prevProjectLayers.filter(
+            (layer) =>
+              layer.getProperties().id !== activeLayer.getProperties().id,
+          ),
+        );
+      });
     closeContextMenu();
   };
 
@@ -81,18 +95,81 @@ const Sidebar: React.FC<SidebarProps> = ({
     };
   }, [contextMenuVisible]);
 
+  const handleMoveDown = async () => {
+    if (!activeLayer) {
+      closeContextMenu();
+      return;
+    }
+    const index = projectLayers.findIndex(
+      (layer) => layer.getProperties().id === activeLayer.getProperties().id,
+    );
+    console.log(index);
+    if (index === 0) {
+      closeContextMenu();
+      return;
+    }
+    const response = await api.post(
+      `/gis/project-layer/${activeLayer.getProperties().id}/move-up/`,
+    );
+    console.log(response);
+    if (response.status === 200) {
+      const newLayers = [...projectLayers];
+      [newLayers[index - 1], newLayers[index]] = [
+        newLayers[index],
+        newLayers[index - 1],
+      ];
+      setProjectLayers(newLayers);
+    }
+    closeContextMenu();
+  };
+
+  const handleMoveUp = async () => {
+    if (!activeLayer) {
+      closeContextMenu();
+      return;
+    }
+    console.log(activeLayer.getProperties().id);
+    projectLayers.forEach((layer) => console.log(layer.getProperties().id));
+    const index = projectLayers.findIndex(
+      (layer) => layer.getProperties().id === activeLayer.getProperties().id,
+    );
+    if (index === projectLayers.length - 1) {
+      closeContextMenu();
+      return;
+    }
+    const response = await api.post(
+      `/gis/project-layer/${activeLayer.getProperties().id}/move-down/`,
+    );
+    console.log(response);
+    if (response.status === 200) {
+      const newLayers = [...projectLayers];
+      [newLayers[index], newLayers[index + 1]] = [
+        newLayers[index + 1],
+        newLayers[index],
+      ];
+      setProjectLayers(newLayers);
+    }
+    closeContextMenu();
+  };
+
+  useEffect(() => {
+    console.log(activeLayer?.getProperties());
+  }, [activeLayer]);
+
   return (
     <aside className="w-1/4 bg-white p-4 border-r">
       <h3 className="font-bold mb-2">Layers</h3>
       <hr />
       <ul className="mt-2">
         {projectLayers &&
-          projectLayers.map((layer) => (
+          [...projectLayers].reverse().map((layer) => (
             <li
-              key={layer.id}
+              key={layer.getProperties().id}
               className="flex items-center justify-between mb-2"
             >
-              <span className="truncate flex-grow">{layer.name}</span>
+              <span className="truncate flex-grow">
+                {layer.getProperties().name}
+              </span>
               <button
                 onClick={(event) => openContextMenu(event, layer)}
                 className="pt-1 pb-1 hover:bg-gray-200 bg-gray-100 text-gray-500 rounded hover:text-gray-700 focus:outline-none"
@@ -106,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {contextMenuVisible && (
         <div
           ref={contextMenuRef}
-          className="absolute bg-white shadow-md rounded text-sm"
+          className="absolute bg-white shadow-md rounded"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
@@ -115,11 +192,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <button
-            onClick={handleStyleLayer}
             className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            onClick={handleMoveUp}
           >
-            Style Layer
+            Move Up
           </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            onClick={handleMoveDown}
+          >
+            Move Down
+          </button>
+          {activeLayer &&
+            activeLayer.getProperties().name !== 'Open Street Map' && (
+              <button
+                onClick={handleStyleLayer}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Style Layer
+              </button>
+            )}
           <button
             onClick={handleRemoveLayer}
             className="block w-full text-left px-4 py-2 hover:bg-gray-100"
