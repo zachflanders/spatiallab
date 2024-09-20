@@ -18,6 +18,7 @@ import { Task } from '../types';
 interface FolderPaneProps {
   layers: Layer[];
   homeLayers: Layer[];
+  setHomeLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   directories: Directory[];
   selectedLayer: Layer | null;
   setDirectories: React.Dispatch<React.SetStateAction<Directory[]>>;
@@ -35,6 +36,7 @@ interface FolderPaneProps {
 const FolderPane: React.FC<FolderPaneProps> = ({
   layers,
   homeLayers,
+  setHomeLayers,
   directories,
   selectedLayer,
   setDirectories,
@@ -240,7 +242,7 @@ const FolderPane: React.FC<FolderPaneProps> = ({
             </div>
           ))}
       </div>
-      {tasks && (
+      {tasks.length > 0 && (
         <div className="sticky bottom-0 bg-white border-t p-2">
           {tasks.map((task: Task, index: number) => (
             <div key={index} className="mb-2">
@@ -309,7 +311,13 @@ const FolderPane: React.FC<FolderPaneProps> = ({
       {uploadModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="shadow-lg">
-            <FileUploadForm onClose={() => setUploadModalOpen(false)} />
+            <FileUploadForm
+              directories={directories}
+              setDirectories={setDirectories}
+              homeLayers={homeLayers}
+              setHomeLayers={setHomeLayers}
+              onClose={() => setUploadModalOpen(false)}
+            />
           </div>
         </div>
       )}

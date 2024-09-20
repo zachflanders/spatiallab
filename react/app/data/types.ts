@@ -1,5 +1,5 @@
 export type Layer = {
-  id: string;
+  id: number;
   name: string;
   directory: number;
 };

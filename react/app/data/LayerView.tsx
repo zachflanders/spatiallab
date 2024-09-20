@@ -93,69 +93,73 @@ const LayerView: React.FC<Props> = ({
   };
   return (
     <div className="flex flex-col h-full">
-      <div
-        className="flex justify-between items-center p-2 pr-4 border-b"
-        style={{ height: '59px' }}
-      >
-        <div className="flex items-center">
-          <EditableName
-            key={selectedLayer.id}
-            initialName={selectedLayer.name}
-            layerId={selectedLayer.id}
-            layers={homeLayers}
-            setLayers={setHomeLayers}
-            sortLayers={sortLayers}
-            directories={directories}
-            setDirectories={setDirectories}
-          ></EditableName>
-          <button
-            onClick={() => setShowMoveModal(true)}
-            className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-          >
-            <FolderMoveIcon width="24px" height="24px" />
-          </button>
-        </div>
-        <div className="flex space-x-1">
-          <button
-            onClick={handleExport}
-            className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-          >
-            <ArrowDownTrayIcon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={handleDelete}
-            className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
-          >
-            <TrashIcon className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-      <div className="flex flex-col flex-grow" ref={containerRef}>
-        <div className="flex-grow overflow-hidden">
-          <GeoServerMap
-            layer={Number(selectedLayer.id)}
-            extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
-          />
-        </div>
-        <div
-          className="bg-gray-300 cursor-row-resize items-center flex justify-center"
-          style={{ height: '2px' }}
-          onMouseDown={handleMouseDown}
-        >
+      {selectedLayer && (
+        <>
           <div
-            className="justify-center bg-white rounded-md p-1 pt-0 pb-0 cursor-row-resize border drop-shadow-sm"
-            onMouseDown={handleMouseDown}
-            style={{ zIndex: 9 }}
+            className="flex justify-between items-center p-2 pr-4 border-b"
+            style={{ height: '59px' }}
           >
-            <GripHorizontalIcon />
+            <div className="flex items-center">
+              <EditableName
+                key={selectedLayer.id}
+                initialName={selectedLayer.name}
+                layerId={selectedLayer.id}
+                layers={homeLayers}
+                setLayers={setHomeLayers}
+                sortLayers={sortLayers}
+                directories={directories}
+                setDirectories={setDirectories}
+              ></EditableName>
+              <button
+                onClick={() => setShowMoveModal(true)}
+                className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+              >
+                <FolderMoveIcon width="24px" height="24px" />
+              </button>
+            </div>
+            <div className="flex space-x-1">
+              <button
+                onClick={handleExport}
+                className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center p-2 rounded-lg hover:bg-gray-800 hover:bg-opacity-5 items-center text-center"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="overflow-hidden" style={{ height: `${height}px` }}>
-          <div className="h-full overflow-auto">
-            <LayerTable layer={selectedLayer} />
+          <div className="flex flex-col flex-grow" ref={containerRef}>
+            <div className="flex-grow overflow-hidden">
+              <GeoServerMap
+                layer={Number(selectedLayer.id)}
+                extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
+              />
+            </div>
+            <div
+              className="bg-gray-300 cursor-row-resize items-center flex justify-center"
+              style={{ height: '2px' }}
+              onMouseDown={handleMouseDown}
+            >
+              <div
+                className="justify-center bg-white rounded-md p-1 pt-0 pb-0 cursor-row-resize border drop-shadow-sm"
+                onMouseDown={handleMouseDown}
+                style={{ zIndex: 9 }}
+              >
+                <GripHorizontalIcon />
+              </div>
+            </div>
+            <div className="overflow-hidden" style={{ height: `${height}px` }}>
+              <div className="h-full overflow-auto">
+                <LayerTable layer={selectedLayer} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

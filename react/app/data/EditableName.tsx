@@ -6,7 +6,7 @@ import { Layer } from './types';
 
 interface EditableNameProps {
   initialName: string;
-  layerId: string;
+  layerId: number;
   layers: any[];
   setLayers: React.Dispatch<React.SetStateAction<any[]>>;
   sortLayers: (layers: any[]) => any[];
@@ -58,7 +58,7 @@ const EditableName: React.FC<EditableNameProps> = ({
       setLayers(sortedLayers);
       const updateDirectoryRecursive = (
         directories: any[],
-        layerId: string,
+        layerId: number,
         data: any,
       ): any[] => {
         return directories.map((dir) => {
