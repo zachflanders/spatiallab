@@ -3,42 +3,48 @@ services:
     build:
       context: ./django
       dockerfile: Dockerfile
+      args:
+        EMAIL_HOST: ${EMAIL_HOST}
+        EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+        EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+        GCS_BUCKET_NAME: ${GCS_BUCKET_NAME}
     container_name: django
     command: ["poetry", "run", "gunicorn", "--timeout", "600", "spatiallab.wsgi:application", "--bind", "0.0.0.0:8080"]
     volumes:
       - ./django:/app
     environment:
       - DEBUG=True
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_USER=${POSTGRES_USER}  
       - DJANGO_SETTINGS_MODULE=spatiallab.settings
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/spatiallab
-      - CELERY_BROKER_URL=pyamqp://user:password@rabbitmq:5672//
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=pyamqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
       - REDIS_URL=redis://redis:6379/1
+      - DJANGO_ALLOWED_HOSTS=localhost,spatiallab.app
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
     expose:
       - "8080"
     depends_on:
       - postgres
-      - rabbitmq
 
   postgres:
     image: postgis/postgis:latest
     container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: spatiallab
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
 
   react:
     build:
       context: ./react
       args:
-        NEXT_PUBLIC_PROTOCOL: http
-        NEXT_PUBLIC_ROOT_URL: localhost
-        NEXT_PUBLIC_API_URL: localhost/api
-        NEXT_PUBLIC_TILESERV_URL: localhost/tileserv
+        NEXT_PUBLIC_PROTOCOL: ${NEXT_PUBLIC_PROTOCOL}
+        NEXT_PUBLIC_ROOT_URL: ${NEXT_PUBLIC_ROOT_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_TILESERV_URL: ${NEXT_PUBLIC_TILESERV_URL}
     container_name: react
     volumes:
       - ./react:/app
@@ -49,7 +55,7 @@ services:
     depends_on:
       - django
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
 
   rabbitmq:
     image: rabbitmq:management
@@ -60,8 +66,8 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
 
   celery:
     build:
@@ -74,16 +80,16 @@ services:
       - django
       - rabbitmq
     environment:
-       - CELERY_BROKER_URL=pyamqp://user:password@rabbitmq:5672//
+       - CELERY_BROKER_URL=pyamqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
        - REDIS_URL=redis://redis:6379/1
 
   pg_tileserv:
     build: ./pg_tileserv
     environment:
       - PGHOST=postgres
-      - PGUSER=postgres
-      - PGPASSWORD=postgres
-      - PGDATABASE=spatiallab
+      - PGUSER=${POSTGRES_USER}
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+      - PGDATABASE=${POSTGRES_DB}
       - PGPORT=5432
 
   jenkins:
@@ -99,11 +105,16 @@ services:
     container_name: nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot   
     depends_on:
       - django
       - react
+    restart: always
+
   
   redis:
     image: redis:6.0-alpine 
@@ -112,6 +123,13 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 6h & wait $!; certbot renew; done;'"
 
 volumes:
   postgres_data:

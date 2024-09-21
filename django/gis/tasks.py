@@ -101,6 +101,12 @@ class FileIngestor:
                             )
                             features = []
                             for feature in shapefile:
+                                # Example: Convert custom object to dict or str if necessary
+                                properties = {
+                                    key: (value.to_dict() if hasattr(value, 'to_dict') else str(value))
+                                    for key, value in feature["properties"].items()
+                                }
+
                                 geom = feature["geometry"]
                                 if crs != CRS("EPSG:4326"):
                                     geom = self.transform_geom(transformer, geom)
@@ -108,7 +114,7 @@ class FileIngestor:
                                     {
                                         "type": "Feature",
                                         "geometry": geom,
-                                        "properties": feature["properties"],
+                                        "properties": properties,
                                     }
                                 )
 
@@ -229,7 +235,7 @@ def ingest_file_to_db_task(self, file_name, layer_name, directory, user_email):
     try:
         # Initialize the file ingestor
         ingestor = FileIngestor(
-            f"gs://{settings.GCS_BUCKET_NAME}/{file_name}",
+            f"gs://spatiallab/{file_name}",
             layer_name,
             directory,
             user_email,

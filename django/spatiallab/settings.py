@@ -23,7 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="your-secret-key")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = [
+    'spatiallab.app',
+    'www.spatiallab.app',  # If using www
+    'localhost',
+] 
 
 # Application definition
 INSTALLED_APPS = [
@@ -42,6 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -49,7 +54,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "spatiallab.urls"
@@ -142,11 +146,20 @@ STATIC_ROOT = BASE_DIR / "static"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "https://spatiallab.app",
     "http://localhost",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://spatiallab.app',
+    'https://www.spatiallab.app',  # If using the www subdomain
+]
+
+CSRF_COOKIE_SECURE = True  # Ensures that the CSRF cookie is only sent over HTTPS
+SESSION_COOKIE_SECURE = True
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
@@ -170,4 +183,4 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "UTC"
 
-EARLY_ACCESS_CODE = env("EARLY_ACCESS_CODE", default="early bird")
+EARLY_ACCESS_CODE = env("EARLY_ACCESS_CODE", default="planning voltron")
