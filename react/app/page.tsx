@@ -259,13 +259,13 @@ export default function Home() {
             </div>
 
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+	    <div className="flex justify-center">
               <div
                 className="rounded-lg shadow-lg bg-gray-100 border border-gray-300 flex items-center justify-center"
                 style={{ height: 400, width: 600 }}
               >
                 <Cog8ToothIcon className="h-48 w-48 text-gray-400 mx-auto" />
               </div>
-
               <div className="flex flex-col justify-center order-1 md:order-2">
                 <h2 className="text-4xl font-semibold text-gray-800 text-right">
                   The tools you need.
@@ -276,6 +276,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
+	    </div>
 
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="flex flex-col justify-center">
@@ -287,12 +288,14 @@ export default function Home() {
                   easy publishing tools.
                 </p>
               </div>
+	      <div className="flex justify-center">
               <div
                 className="rounded-lg shadow-lg bg-gray-100 border border-gray-300 flex items-center justify-center"
                 style={{ height: 400, width: 600 }}
               >
                 <GlobeAmericasIcon className="h-48 w-48 text-gray-400 mx-auto" />
               </div>
+	      </div>
             </div>
           </div>
           <Footer />

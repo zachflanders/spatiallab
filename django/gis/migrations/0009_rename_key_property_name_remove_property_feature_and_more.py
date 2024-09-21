@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
             model_name="property",
             name="layer",
             field=models.ForeignKey(
-                default=5,
+                default=1,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="properties",
                 to="gis.layer",

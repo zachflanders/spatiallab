@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
+from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -84,8 +85,7 @@ def signup_view(request):
                 },
                 status=201,
             )
-        return JsonResponse({"errors": form.errors}, status=400)
-
+        return JsonResponse({"errors": form.errors}, status=400) 
 
 def activate_view(request, uid, token):
     try:
