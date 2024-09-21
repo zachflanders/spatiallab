@@ -87,7 +87,7 @@ services:
       - PGHOST=postgres
       - PGUSER=${POSTGRES_USER}
       - PGPASSWORD=${POSTGRES_PASSWORD}
-      - PGDATABASE=(POSTGRES_DB}
+      - PGDATABASE=${POSTGRES_DB}
       - PGPORT=5432
 
   jenkins:
