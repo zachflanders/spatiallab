@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy via SSH
       run: |
-        ssh root@${{ screts.DIGITALOCEAN_IP }} << 'EOF'
+        ssh root@${{ secrets.DIGITALOCEAN_IP }} << 'EOF'
           cd /var/www/spatial-lab/spatiallab/docker-compose
           git pull origin main
           docker-compose pull
