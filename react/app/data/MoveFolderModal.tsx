@@ -48,7 +48,8 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
   const handleMove = () => {
     if (
       selectedFolder &&
-      !isInvalidMove(current, selectedFolder, directories)
+      ('directory' in current ||
+        !isInvalidMove(current, selectedFolder, directories))
     ) {
       onMove(selectedFolder);
       onClose();

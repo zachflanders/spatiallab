@@ -8,6 +8,7 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
 import { set } from 'ol/transform';
+import { on } from 'events';
 
 export interface StyleOptions {
   fillColor: any;
@@ -34,16 +35,10 @@ const StyleControl: React.FC<StyleControlProps> = ({
   useEffect(() => {
     if (!selectedStylingLayer) return;
     let stylelike = selectedStylingLayer.getStyle();
-    console.log(stylelike);
-    console.log(typeof stylelike);
-    console.log(stylelike instanceof Style);
     if (stylelike instanceof Style) {
-      // If it's a single Style object
       setStyleProperties(stylelike);
     }
-
     function setStyleProperties(style: Style) {
-      console.log(style);
       if (style.getFill()) {
         const fillColor = style.getFill();
         if (fillColor) {
@@ -51,7 +46,6 @@ const StyleControl: React.FC<StyleControlProps> = ({
           setFillColor(color);
         }
       }
-
       if (style.getStroke()) {
         const stroke = style.getStroke();
         if (stroke) {
@@ -67,15 +61,21 @@ const StyleControl: React.FC<StyleControlProps> = ({
   }, [selectedStylingLayer]);
 
   const handleStyleChange = () => {
-    onUpdateStyle({
-      fillColor: `rgba(${fillColor.r}, ${fillColor.g}, ${fillColor.b}, ${fillColor.a})`,
-      strokeColor: `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${strokeColor.a})`,
+    const styleOptions = {
+      fillColor:
+        typeof fillColor === 'string'
+          ? fillColor
+          : `rgba(${fillColor.r}, ${fillColor.g}, ${fillColor.b}, ${fillColor.a})`,
+      strokeColor:
+        typeof strokeColor === 'string'
+          ? strokeColor
+          : `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${strokeColor.a})`,
       lineWidth,
-    });
+    };
+    onUpdateStyle(styleOptions);
   };
 
   const handleFillColorChange = (color: ColorResult) => {
-    console.log(color);
     setFillColor(color.rgb);
   };
 
@@ -93,6 +93,9 @@ const StyleControl: React.FC<StyleControlProps> = ({
       : setActivePicker('stroke');
   };
   useEffect(() => {
+    console.log('fillColor', fillColor);
+    console.log('strokeColor', strokeColor);
+    console.log('lineWidth', lineWidth);
     handleStyleChange();
   }, [fillColor, strokeColor, lineWidth]);
 
@@ -135,9 +138,10 @@ const StyleControl: React.FC<StyleControlProps> = ({
       <div>
         <h4>Line Width</h4>
         <input
-          type="range"
-          min="1"
+          type="number"
+          min="0.1"
           max="10"
+          step="0.1"
           value={lineWidth}
           onChange={(e) => {
             setLineWidth(Number(e.target.value));
