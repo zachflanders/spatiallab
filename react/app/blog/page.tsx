@@ -1,11 +1,11 @@
+import React from 'react';
+
 import Footer from '../../components/Footer';
 
-export const blog = () => {
+const Page: React.FC = () => {
   return (
     <div>
       <div className="container px-6 mx-auto max-w-3xl overflow-hidden md:overflow-visible ">
-        <h1 className="text-2xl my-4">Blog</h1>
-        <hr />
         <div className="text-center">
           <h2 className="text-4xl font-bold my-8">
             My Geospatial Journey: An Eras Tour of Spatial Lab
@@ -86,8 +86,8 @@ export const blog = () => {
           </span>
           . It was challenging, but ultimately, I launched a platform, gained
           some local government clients, and gathered hundreds of ideas for bike
-          infrastructure around Kansas City—and it didn't crash, which was a win
-          in itself!
+          infrastructure around Kansas City—and it didn&apos;t crash, which was
+          a win in itself!
         </p>
 
         <h3 className="font-bold my-4 text-lg">
@@ -125,18 +125,18 @@ export const blog = () => {
           </span>
           . What makes Spatial Lab different is its focus on being well-designed
           and simple to use while still offering the full range of tools GIS
-          professionals need. I believe that powerful tools don't have to be
-          overwhelming. You should be able to enjoy the map-making process
-          without sacrificing functionality, and that's the mission driving
+          professionals need. I believe that powerful tools don&apos;t have to
+          be overwhelming. You should be able to enjoy the map-making process
+          without sacrificing functionality, and that&apos;s the mission driving
           Spatial Lab.
         </p>
 
         <p className="mt-8 mb-24">
-          It's still early days in the Spatial Lab journey, and I'm excited
-          about the possibilities ahead. If you share my passion for maps and
-          GIS, I'd love for you to join me on this adventure. Help put Spatial
-          Lab on the map by sharing it with your network—together, we can shape
-          the future of GIS.
+          It&apos;s still early days in the Spatial Lab journey, and I&apos;m
+          excited about the possibilities ahead. If you share my passion for
+          maps and GIS, I&apos;d love for you to join me on this adventure. Help
+          put Spatial Lab on the map by sharing it with your network—together,
+          we can shape the future of GIS.
         </p>
       </div>
       <Footer />
@@ -144,4 +144,4 @@ export const blog = () => {
   );
 };
 
-export default blog;
+export default Page;
