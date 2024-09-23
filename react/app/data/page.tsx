@@ -64,14 +64,10 @@ const Page: React.FC = () => {
         const homeLayers = sortedLayers.filter((layer) => !layer.directory);
         setHomeLayers(homeLayers);
         const selectedLayerParam = searchParams.get('selected-layer');
-        console.log('selectedLayerParam', selectedLayerParam);
-
         if (selectedLayerParam && homeLayers.length > 0) {
-          console.log('homeLayers', homeLayers);
           const layer = homeLayers.find(
             (layer) => layer.id === parseInt(selectedLayerParam),
           );
-          console.log('layer', layer);
           if (layer) {
             handleSelection(layer);
           }

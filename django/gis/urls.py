@@ -13,6 +13,7 @@ from .views import (
     CheckTaskStatusView,
     move_model_up,
     move_model_down,
+    LayerFeatureByIdListView,
 )
 
 router = DefaultRouter()
@@ -44,4 +45,7 @@ urlpatterns = [
     ),
     path("project-layer/<int:pk>/move-up/", move_model_up, name="move_model_up"),
     path("project-layer/<int:pk>/move-down/", move_model_down, name="move_model_down"),
+    path(
+        "features/by-ids/", LayerFeatureByIdListView.as_view(), name="features-by-ids"
+    ),
 ]

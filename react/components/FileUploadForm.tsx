@@ -59,9 +59,7 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
         content_type: file.type,
         extension: file.name.split('.').pop(),
       };
-      console.log(body);
       const response = await api.post('/gis/generate-signed-url/', body);
-      console.log('response', response);
       const { signed_url, file_name } = await response.data;
       const xhr = new XMLHttpRequest();
       xhr.open('PUT', signed_url, true);
@@ -78,7 +76,6 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
 
       xhr.onload = async () => {
         if (xhr.status === 200) {
-          console.log('Upload successful');
           removeTask(uploadTask.task_id);
           const taskResponse = await api.post('/gis/start-ingest-task/', {
             file_name: file_name,
@@ -102,10 +99,7 @@ const FileUploadForm: React.FC<FileUploadFormProps> = ({
             const statusData = await statusResponse.data;
             updateTask({ ...task, progress: statusData.progress });
             status = statusData.status;
-            console.log('status', status);
-
             if (status === 'completed') {
-              console.log('Ingest completed!', statusData);
               const newLayerId = statusData.data.layer_id;
               removeTask(task_id);
               const response = await api.get(`/gis/layer/${newLayerId}/`);

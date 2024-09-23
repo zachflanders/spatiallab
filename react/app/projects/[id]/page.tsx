@@ -101,12 +101,10 @@ export default function Page({ params }: PageProps) {
               name: 'Open Street Map',
               id: projectLayer.id,
             });
-            console.log(layer);
             return layer;
           }
         },
       );
-      console.log(intialLayers);
       setFooLayers(intialLayers);
     });
 
@@ -128,10 +126,6 @@ export default function Page({ params }: PageProps) {
       map.getView().setZoom(2);
     }
   }, [project?.extent]);
-
-  useEffect(() => {
-    console.log(selectedLayer);
-  }, [selectedLayer]);
 
   useEffect(() => {
     if (map && fooLayers.length > 0) {

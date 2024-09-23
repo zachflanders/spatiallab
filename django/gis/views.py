@@ -330,3 +330,61 @@ def move_model_down(request, pk):
         return Response(
             {"detail": "Object not found"}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+class LayerFeatureByIdListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Extract feature IDs from the request body
+        feature_ids = request.data.get("feature_ids", [])
+        layer_id = request.data.get("layer_id")
+
+        if not feature_ids or not layer_id:
+            return Response(
+                {"error": "No feature IDs or layer id provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get the features based on the provided feature IDs
+        features = LayerFeature.objects.filter(id__in=feature_ids, layer_id=layer_id)
+
+        if not features.exists():
+            return Response(
+                {"error": "No features found for the provided IDs."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Pagination parameters from the request
+        page = request.GET.get("page", 1)
+        page_size = request.GET.get("page_size", 10)
+
+        # Paginate the features
+        paginator = Paginator(features, page_size)
+
+        try:
+            paginated_features = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_features = paginator.page(1)
+        except EmptyPage:
+            paginated_features = paginator.page(paginator.num_pages)
+
+        # Create a list of features with all properties
+        table_data = [
+            {
+                "Feature ID": feature.id,
+                **feature.properties,
+            }
+            for feature in paginated_features
+        ]
+
+        # Return the list of features with pagination metadata
+        response_data = {
+            "data": table_data,
+            "page": paginated_features.number,
+            "page_size": page_size,
+            "total_pages": paginator.num_pages,
+            "total_features": paginator.count,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)

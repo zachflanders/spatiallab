@@ -34,6 +34,7 @@ const LayerView: React.FC<Props> = ({
   extent,
 }) => {
   const [height, setHeight] = useState((window.innerHeight - (59 + 73)) / 2);
+  const [selectedFeatures, setSelectedFeatures] = useState<number[]>([]);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -137,6 +138,8 @@ const LayerView: React.FC<Props> = ({
               <GeoServerMap
                 layer={Number(selectedLayer.id)}
                 extent={extent && !extent.length ? [0, 0, 0, 0] : extent}
+                selectedFeatures={selectedFeatures}
+                setSelectedFeatures={setSelectedFeatures}
               />
             </div>
             <div
@@ -154,7 +157,11 @@ const LayerView: React.FC<Props> = ({
             </div>
             <div className="overflow-hidden" style={{ height: `${height}px` }}>
               <div className="h-full overflow-auto">
-                <LayerTable layer={selectedLayer} />
+                <LayerTable
+                  layer={selectedLayer}
+                  selectedFeatures={selectedFeatures}
+                  setSelectedFeatures={setSelectedFeatures}
+                />
               </div>
             </div>
           </div>
