@@ -213,18 +213,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                   type="checkbox"
                   className=" flex-shrink-0 form-checkbox w-4 h-4 text-blue-600 bg-gray-100 border rounded-lg focus:ring-blue-500 focus:ring-1"
                 />
-                <div
-                  className={`size-4 rounded flex-shrink-0`}
-                  style={{
-                    borderColor: layer
-                      .getProperties()
-                      .style.strokeColor.includes('undefined')
-                      ? 'black'
-                      : layer.getProperties().style.strokeColor,
-                    borderWidth: layer.getProperties().style.lineWidth * 2,
-                    backgroundColor: layer.getProperties().style.fillColor,
-                  }}
-                ></div>
+                {'style' in layer.getProperties() && (
+                  <div
+                    className={`size-4 rounded flex-shrink-0`}
+                    style={{
+                      borderColor: layer
+                        .getProperties()
+                        .style.strokeColor.includes('undefined')
+                        ? 'black'
+                        : layer.getProperties().style.strokeColor,
+                      borderWidth: layer.getProperties().style.lineWidth * 2,
+                      backgroundColor: layer.getProperties().style.fillColor,
+                    }}
+                  ></div>
+                )}
                 <span className="truncate flex-grow">
                   {layer.getProperties().name}
                 </span>
