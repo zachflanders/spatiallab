@@ -103,7 +103,11 @@ class FileIngestor:
                             for feature in shapefile:
                                 # Example: Convert custom object to dict or str if necessary
                                 properties = {
-                                    key: (value.to_dict() if hasattr(value, 'to_dict') else str(value))
+                                    key: (
+                                        value.to_dict()
+                                        if hasattr(value, "to_dict")
+                                        else str(value)
+                                    )
                                     for key, value in feature["properties"].items()
                                 }
 
@@ -259,7 +263,6 @@ def ingest_file_to_db_task(self, file_name, layer_name, directory, user_email):
     except Exception as e:
         # Handle errors by marking the task as failed
         cache.set(self.request.id, {"status": "error", "error": str(e)})
-        raise e
     finally:
         close_old_connections()
 
