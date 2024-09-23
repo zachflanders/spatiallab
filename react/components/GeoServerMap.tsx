@@ -12,6 +12,7 @@ import { Select } from 'ol/interaction';
 import { click } from 'ol/events/condition';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
+import Circle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import 'ol/ol.css';
 import { set } from 'ol/transform';
@@ -39,7 +40,17 @@ const GeoServerMap: React.FC<MapProps> = ({
       width: 1,
     }),
     fill: new Fill({
-      color: 'rgba(37, 99, 235,0.1)',
+      color: 'rgba(37, 99, 235, 0.2)',
+    }),
+    image: new Circle({
+      radius: 5,
+      fill: new Fill({
+        color: 'rgba(37, 99, 235, 0.2)',
+      }),
+      stroke: new Stroke({
+        color: 'rgba(37, 99, 235, 0.6)',
+        width: 1,
+      }),
     }),
   });
 
@@ -50,6 +61,16 @@ const GeoServerMap: React.FC<MapProps> = ({
     }),
     fill: new Fill({
       color: 'rgba(254, 240, 138,0.4)',
+    }),
+    image: new Circle({
+      radius: 5,
+      fill: new Fill({
+        color: 'rgba(254, 240, 138,0.4)',
+      }),
+      stroke: new Stroke({
+        color: 'rgba(234, 179, 8, 0.6)',
+        width: 1,
+      }),
     }),
   });
 

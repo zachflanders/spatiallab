@@ -86,13 +86,11 @@ const Page: React.FC = () => {
       </div>
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <AddProjectForm
-              projects={projects}
-              setProjects={setProjects}
-              onClose={handleCloseModal}
-            />
-          </div>
+          <AddProjectForm
+            projects={projects}
+            setProjects={setProjects}
+            onClose={handleCloseModal}
+          />
         </div>
       )}
     </div>

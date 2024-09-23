@@ -135,9 +135,8 @@ const MoveFolderModal: React.FC<MoveFolderModalProps> = ({
       className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center"
       style={{ zIndex: 1000 }}
     >
-      <div className="bg-white p-4 rounded shadow-lg w-1/2">
-        <h2 className="text-xl mb-4">{`Move ${current.name}`}</h2>
-        <hr />
+      <div className="max-w-md w-full md:w-1/2 sm:w-5/6 mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+        <h2 className="text-xl font-bold mb-4">{`Move ${current.name}`}</h2>
         <h2 className="text-lg my-4">Select New Folder</h2>
         <div className="overflow-auto h-64 border rounded shadow-inner">
           <div className="ml-4">
