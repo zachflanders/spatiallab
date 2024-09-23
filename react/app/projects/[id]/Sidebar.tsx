@@ -52,7 +52,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleStyleLayer = () => {
     if (activeLayer && !('basemap' in activeLayer.getProperties())) {
-      console.log(activeLayer);
       setActiveModal('style');
       setSelectedStylingLayer(activeLayer);
       closeContextMenu();
@@ -103,7 +102,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     const index = projectLayers.findIndex(
       (layer) => layer.getProperties().id === activeLayer.getProperties().id,
     );
-    console.log(index);
     if (index === 0) {
       closeContextMenu();
       return;
@@ -111,7 +109,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     const response = await api.post(
       `/gis/project-layer/${activeLayer.getProperties().id}/move-up/`,
     );
-    console.log(response);
     if (response.status === 200) {
       const newLayers = [...projectLayers];
       [newLayers[index - 1], newLayers[index]] = [
@@ -128,8 +125,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       closeContextMenu();
       return;
     }
-    console.log(activeLayer.getProperties().id);
-    projectLayers.forEach((layer) => console.log(layer.getProperties().id));
     const index = projectLayers.findIndex(
       (layer) => layer.getProperties().id === activeLayer.getProperties().id,
     );
@@ -140,7 +135,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     const response = await api.post(
       `/gis/project-layer/${activeLayer.getProperties().id}/move-down/`,
     );
-    console.log(response);
     if (response.status === 200) {
       const newLayers = [...projectLayers];
       [newLayers[index], newLayers[index + 1]] = [
@@ -151,10 +145,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
     closeContextMenu();
   };
-
-  useEffect(() => {
-    console.log(activeLayer?.getProperties());
-  }, [activeLayer]);
 
   return (
     <aside className="w-1/4 bg-white p-4 border-r">

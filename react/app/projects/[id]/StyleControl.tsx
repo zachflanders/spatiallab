@@ -93,9 +93,6 @@ const StyleControl: React.FC<StyleControlProps> = ({
       : setActivePicker('stroke');
   };
   useEffect(() => {
-    console.log('fillColor', fillColor);
-    console.log('strokeColor', strokeColor);
-    console.log('lineWidth', lineWidth);
     handleStyleChange();
   }, [fillColor, strokeColor, lineWidth]);
 
