@@ -40,8 +40,8 @@ const AddProjectForm: React.FC<AddProjectProps> = ({
     }
   };
   return (
-    <div className="p-8 bg-white ">
-      <h2 className="text-lg font-bold mb-4">Add New Project</h2>
+    <div className="max-w-md w-full md:w-1/2 sm:w-5/6 mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+      <h2 className="text-xl font-bold mb-4">Add New Project</h2>
       {error && <div className="mb-4 text-red-500">{error}</div>}
       {success && <div className="mb-4 text-green-500">{success}</div>}
       <form onSubmit={handleSubmit}>
@@ -76,11 +76,11 @@ const AddProjectForm: React.FC<AddProjectProps> = ({
             required
           />
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <button
             type="button"
             onClick={onClose}
-            className="bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2"
           >
             Cancel
           </button>

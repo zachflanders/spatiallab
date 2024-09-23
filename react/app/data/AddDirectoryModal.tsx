@@ -27,19 +27,19 @@ const AddDirectoryModal: React.FC<AddDirectoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl mb-4">Add New Directory</h2>
+      <div className="max-w-md mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+        <h2 className="text-xl font-bold mb-4">Add New Directory</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            className="border p-2 mb-4 w-full"
+            className="border p-2 mb-4 w-full rounded"
             placeholder="Directory Name"
             value={directoryName}
             onChange={(e) => setDirectoryName(e.target.value)}
             required
           />
           <select
-            className="border p-2 mb-4 w-full"
+            className="border p-2 mb-4 w-full rounded bg-white"
             value={`${parentDirectory}`}
             onChange={(e) =>
               setParentDirectory(

@@ -145,6 +145,7 @@ class ProjectLayer(OrderedModel):
     basemap = models.CharField(
         max_length=50, choices=BASEMAP_CHOICES, null=True, blank=True
     )
+    visible = models.BooleanField(default=True)
 
     order_with_respect_to = "project"
 

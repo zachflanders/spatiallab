@@ -1,4 +1,4 @@
-import { Style, Fill, Stroke } from 'ol/style';
+import { Style, Fill, Stroke, Circle } from 'ol/style';
 
 export const applyStyleToLayer = (layer: any, styleOptions: StyleOptions) => {
   const { fillColor, strokeColor, lineWidth } = styleOptions;
@@ -10,6 +10,16 @@ export const applyStyleToLayer = (layer: any, styleOptions: StyleOptions) => {
     stroke: new Stroke({
       color: strokeColor,
       width: lineWidth,
+    }),
+    image: new Circle({
+      radius: 5,
+      fill: new Fill({
+        color: fillColor,
+      }),
+      stroke: new Stroke({
+        color: strokeColor,
+        width: lineWidth,
+      }),
     }),
   });
 

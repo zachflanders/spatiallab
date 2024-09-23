@@ -5,8 +5,10 @@ import { Layer, ProjectLayer, Basemap } from './types';
 import api from '../../api';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import TileLayer from 'ol/layer/Tile';
+import { set } from 'ol/transform';
 
 interface SidebarProps {
+  project: any;
   projectLayers: (VectorTileLayer | TileLayer)[];
   setProjectLayers: React.Dispatch<
     React.SetStateAction<(VectorTileLayer | TileLayer)[]>
@@ -18,6 +20,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
+  project,
   projectLayers,
   setProjectLayers,
   setActiveModal,
@@ -72,6 +75,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       });
     closeContextMenu();
   };
+
+  useEffect(() => {
+    projectLayers.forEach((layer) => {
+      console.log(layer.getProperties());
+    });
+  }, [projectLayers]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -146,29 +155,89 @@ const Sidebar: React.FC<SidebarProps> = ({
     closeContextMenu();
   };
 
+  const handleVsibilityChange = (layer: VectorTileLayer | TileLayer) => {
+    const properties = layer.getProperties();
+    const newLayer = projectLayers.find(
+      (l) => l.getProperties().id === properties.id,
+    );
+    if (!newLayer) return;
+    newLayer.setProperties({
+      ...properties,
+      isVisible: !properties.isVisible,
+    });
+    newLayer.setVisible(!properties.isVisible);
+    setProjectLayers(
+      projectLayers.map((l) => {
+        if (l.getProperties().id === properties.id) {
+          return newLayer;
+        }
+        return l;
+      }),
+    );
+    api.put(`/gis/project-layers/${layer.getProperties().id}/`, {
+      visible: !properties.isVisible,
+    });
+  };
+
   return (
-    <aside className="w-1/4 bg-white p-4 border-r">
-      <h3 className="font-bold mb-2">Layers</h3>
-      <hr />
-      <ul className="mt-2">
-        {projectLayers &&
-          [...projectLayers].reverse().map((layer) => (
-            <li
-              key={layer.getProperties().id}
-              className="flex items-center justify-between mb-2"
-            >
-              <span className="truncate flex-grow">
-                {layer.getProperties().name}
-              </span>
-              <button
-                onClick={(event) => openContextMenu(event, layer)}
-                className="pt-1 pb-1 hover:bg-gray-200 bg-gray-100 text-gray-500 rounded hover:text-gray-700 focus:outline-none"
+    <aside className="w-1/4 bg-white border-r">
+      <div className="px-4 py-1">
+        <h3 className="font-bold">Project</h3>
+      </div>
+      <div className="p-4 border-t">
+        <div className="flex space-x-2">
+          <div className="font-bold">Project Name:</div>
+          <div>{project && project.name}</div>
+        </div>
+        <div className="flex justify-between items-center">
+          <div>
+            <span className="font-bold">Status:</span> Published{' '}
+          </div>
+          <button className="text-sm border rounded p-2">Embed Code</button>
+        </div>
+      </div>
+      <div className="px-4 py-1 border-t">
+        <h3 className="font-bold">Layers</h3>
+      </div>
+      <div className="p-4 border-t">
+        <ul>
+          {projectLayers &&
+            [...projectLayers].reverse().map((layer) => (
+              <li
+                key={layer.getProperties().id}
+                className="flex items-center justify-between space-x-2 mb-1"
               >
-                <EllipsisVerticalIcon className="h-5 w-5" />
-              </button>
-            </li>
-          ))}
-      </ul>
+                <input
+                  checked={layer.getProperties().isVisible}
+                  onChange={() => handleVsibilityChange(layer)}
+                  type="checkbox"
+                  className=" flex-shrink-0 form-checkbox w-4 h-4 text-blue-600 bg-gray-100 border rounded-lg focus:ring-blue-500 focus:ring-1"
+                />
+                <div
+                  className={`size-4 rounded flex-shrink-0`}
+                  style={{
+                    borderColor: layer
+                      .getProperties()
+                      .style.strokeColor.includes('undefined')
+                      ? 'black'
+                      : layer.getProperties().style.strokeColor,
+                    borderWidth: layer.getProperties().style.lineWidth * 2,
+                    backgroundColor: layer.getProperties().style.fillColor,
+                  }}
+                ></div>
+                <span className="truncate flex-grow">
+                  {layer.getProperties().name}
+                </span>
+                <button
+                  onClick={(event) => openContextMenu(event, layer)}
+                  className="pt-1 pb-1 hover:bg-gray-100 rounded focus:outline-none"
+                >
+                  <EllipsisVerticalIcon className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+        </ul>
+      </div>
 
       {contextMenuVisible && (
         <div

@@ -18,6 +18,11 @@ class ProjectLayerSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    project = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ProjectLayer
@@ -31,6 +36,9 @@ class ProjectLayerSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if "order" not in validated_data:
             validated_data["order"] = instance.order
+        project = validated_data.pop("project", None)
+        if project is not None:
+            validated_data["project"] = project
         return super().update(instance, validated_data)
 
 

@@ -82,15 +82,25 @@ export default function Page({ params }: PageProps) {
                 url: `${process.env.NEXT_PUBLIC_PROTOCOL}://${process.env.NEXT_PUBLIC_TILESERV_URL}/public.layer_${projectLayer.layer.id}_features/{z}/{x}/{y}.pbf`,
               }),
             });
+            const defaultStyle = {
+              fillColor: 'rgba(59, 130, 246, 0.2)',
+              strokeColor: 'rgba(59, 130, 246, 0.6)',
+              lineWidth: 1,
+            };
             layer.setProperties({
               name: projectLayer.layer.name,
               id: projectLayer.id,
               layerId: projectLayer.layer.id,
+              isVisible: projectLayer.visible,
+              style: projectLayer.style ? projectLayer.style : defaultStyle,
             });
             if (projectLayer.style) {
               const { fillColor, strokeColor, lineWidth } = projectLayer.style;
               applyStyleToLayer(layer, { fillColor, strokeColor, lineWidth });
+            } else {
+              applyStyleToLayer(layer, defaultStyle);
             }
+            layer.setVisible(projectLayer.visible);
             return layer;
           } else if (projectLayer.basemap === 'osm') {
             const source = new OSM();
@@ -100,6 +110,7 @@ export default function Page({ params }: PageProps) {
             layer.setProperties({
               name: 'Open Street Map',
               id: projectLayer.id,
+              isVisible: projectLayer.visible,
             });
             return layer;
           }
@@ -160,6 +171,7 @@ export default function Page({ params }: PageProps) {
     };
     api.post(`/gis/project-layers/`, body).then((response) => {
       const newProjectLayerId = response.data.id;
+      const isVisible = response.data.visible;
       if ('id' in selectedLayer) {
         const { id, ...layerWithoutId } = selectedLayer;
         const newProjectLayer = {
@@ -182,6 +194,7 @@ export default function Page({ params }: PageProps) {
         newLayer.setProperties({
           name: selectedLayer.name,
           id: newProjectLayerId,
+          isVisible: isVisible,
         });
         setFooLayers([...fooLayers, newLayer]);
       } else {
@@ -195,6 +208,7 @@ export default function Page({ params }: PageProps) {
           name: selectedLayer.name,
           id: newProjectLayerId,
           layerId: selectedLayer.id,
+          isVisible: isVisible,
         });
 
         setFooLayers([...fooLayers, newLayer]);
@@ -219,6 +233,21 @@ export default function Page({ params }: PageProps) {
 
     if (mapLayer) {
       applyStyleToLayer(mapLayer, layerStyle);
+      mapLayer.setProperties({
+        ...mapLayer.getProperties(),
+        style: layerStyle,
+      });
+      console.log(mapLayer.getProperties());
+      setFooLayers(
+        fooLayers.map((layer) => {
+          if (
+            layer.getProperties().id === selectedStylingLayer.getProperties().id
+          ) {
+            return mapLayer;
+          }
+          return layer;
+        }),
+      );
       map.render();
     }
     api.put(`/gis/project-layers/${selectedStylingLayer.getProperties().id}/`, {
@@ -241,7 +270,7 @@ export default function Page({ params }: PageProps) {
   return (
     <div className="flex flex-col h-screen">
       {/* Top Toolbar */}
-      <header className="flex justify-between items-center bg-white shadow-md p-4 border-b">
+      <header className="flex justify-between items-center bg-white p-4 border-b">
         <div className="space-x-2 flex items-center">
           <button
             className="flex items-center space-x-2 p-2 hover:bg-gray-200 bg-gray-100 text-gray-700 rounded hover:text-gray-900 focus:outline-none"
@@ -265,6 +294,7 @@ export default function Page({ params }: PageProps) {
       <div className="flex flex-grow">
         {/* Sidebar */}
         <Sidebar
+          project={project}
           projectLayers={fooLayers}
           setProjectLayers={setFooLayers}
           setActiveModal={setActiveModal}
@@ -279,8 +309,8 @@ export default function Page({ params }: PageProps) {
 
       {/* Modal */}
       {activeModal === 'add' && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="w-full md:w-1/2 sm:w-5/6 mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
             <h2 className="text-xl font-bold mb-4">Select a Layer to Add</h2>
             <h3 className="text-lg font-bold mb-2">Your Layers</h3>
             <ul className="h-80 overflow-auto">
@@ -314,6 +344,7 @@ export default function Page({ params }: PageProps) {
                     setSelectedLayer({
                       name: 'Open Street Map',
                       basemap: 'osm',
+                      visible: true,
                     })
                   }
                 >
@@ -322,15 +353,15 @@ export default function Page({ params }: PageProps) {
               </li>
             </ul>
 
-            <div className="flex justify-end space-x-4 mt-4">
+            <div className="flex justify-start space-x-4 mt-4">
               <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
+                className="bg-gray-300 hover:bg-gray-400 text-white px-4 py-2 rounded"
                 onClick={closeModal}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={addLayer}
                 disabled={!selectedLayer}
               >
@@ -343,8 +374,8 @@ export default function Page({ params }: PageProps) {
 
       {/* Modal */}
       {activeModal === 'style' && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-3/4">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex justify-center items-center">
+          <div className="w-full md:w-1/2 sm:w-5/6 mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
             <h2 className="text-xl font-bold mb-4">Style Layer</h2>
             {selectedStylingLayer && (
               <div>
@@ -360,13 +391,13 @@ export default function Page({ params }: PageProps) {
 
             <div className="flex justify-end space-x-4 mt-4">
               <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
+                className="bg-gray-300 hover:bg-gray-400 text-white px-4 py-2 rounded"
                 onClick={closeModal}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={() => {
                   applyLayerStyle();
                 }}

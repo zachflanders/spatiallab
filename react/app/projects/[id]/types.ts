@@ -7,6 +7,7 @@ export interface Layer {
 export interface Basemap {
   name: string;
   basemap: 'osm' | 'satellite';
+  visible: boolean;
 }
 
 export interface ProjectLayer {
@@ -19,4 +20,5 @@ export interface ProjectLayer {
   basemap?: 'osm' | 'satellite';
   getStyle: () => any;
   getProperties: () => any;
+  visible: boolean;
 }

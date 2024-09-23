@@ -52,7 +52,11 @@ const DirectoryNode: React.FC<DirectoryNodeProps> = ({
     event.preventDefault();
     try {
       await api.put(`/gis/directories/${directory.id}/`, { name: newName });
-      updateDirectory(directory.id, newName, Number(directory.parent) ?? null);
+      updateDirectory(
+        directory.id,
+        newName,
+        directory.parent ? Number(directory.parent) : null,
+      );
       setIsEditingDirectory(false);
     } catch (error) {
       console.error('Failed to rename directory:', error);

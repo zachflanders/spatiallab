@@ -68,6 +68,7 @@ const Page: React.FC = () => {
           const layer = homeLayers.find(
             (layer) => layer.id === parseInt(selectedLayerParam),
           );
+          console.log('layer', layer);
           if (layer) {
             handleSelection(layer);
           }
